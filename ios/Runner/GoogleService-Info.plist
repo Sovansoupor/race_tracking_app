@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyAP4cry7GK-LcycJZDYJEti0wGLRIY0rB8</string>
+	<key>GCM_SENDER_ID</key>
+	<string>49381842735</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.raceTrackingApp</string>
+	<key>PROJECT_ID</key>
+	<string>flutter2-race-tracking-app</string>
+	<key>STORAGE_BUCKET</key>
+	<string>flutter2-race-tracking-app.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:49381842735:ios:25dda1f153397567534bda</string>
+	<key>DATABASE_URL</key>
+	<string>https://flutter2-race-tracking-app-default-rtdb.asia-southeast1.firebasedatabase.app</string>
+</dict>
+</plist>

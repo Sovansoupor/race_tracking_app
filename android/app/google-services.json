@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "49381842735",
+    "firebase_url": "https://flutter2-race-tracking-app-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "flutter2-race-tracking-app",
+    "storage_bucket": "flutter2-race-tracking-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:49381842735:android:933aa4807f4e0552534bda",
+        "android_client_info": {
+          "package_name": "com.example.race_tracking_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAF-5clzJru4VMsibrol81JC-zb6UjqprQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
