@@ -17,6 +17,7 @@ class RaceColors {
 
   static Color red              = const Color(0xFFEB463D);
   static Color white            = Colors.white;
+  static Color green            = const Color(0xFF4DBA0E);
 
   static Color get backGroundColor { 
     return RaceColors.primary;
