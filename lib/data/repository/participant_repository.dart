@@ -2,6 +2,7 @@ import 'package:race_tracking_app/models/participant/participant.dart';
 
 abstract class ParticipantRepository {
   Future<Participant> addParticipant({
+    required String id,
     required String firstName,
     required String lastName,
     required int age,

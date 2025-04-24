@@ -1,0 +1,22 @@
+import 'package:race_tracking_app/models/race/race.dart';
+
+class RaceDto {
+  static Race fromJson(String id, Map<String, dynamic> json) {
+    return Race(
+      id: id,
+      name: json['name'] ?? 'Unknown',
+      startTime: json['startTime'] ?? DateTime.now(),
+      participantIds: List<String>.from(json['participantIds'] ?? []),
+      segments: List<String>.from(json['segments'] ?? []),
+    );
+  }
+
+  static Map<String, dynamic> toJson(Race race) {
+    return {
+      'name': race.name,
+      'startTime': race.startTime.toIso8601String(),
+      'participant': race.participantIds,
+      'segments': race.segments,
+    };
+  }
+}

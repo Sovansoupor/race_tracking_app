@@ -11,7 +11,7 @@ class FirebaseSegmentRepository extends SegmentRepository{
   static const String segmentCollection = "Segment";
   static const String allSegmentUrl = '$baseUrl/$segmentCollection.json';
   @override
-  Future<Segment> addSegment({required String name, required int order, required String id}) async {
+  Future<Segment> addSegment({required String name, required int order, required String id, required int? distance}) async {
     Uri uri = Uri.parse(allSegmentUrl);
 
     // Create a new data
@@ -19,6 +19,7 @@ class FirebaseSegmentRepository extends SegmentRepository{
       'name': name,
       'order': order,
       'id': id,
+      'distance': null,
     };
     final http.Response response = await http.post(
       uri,
@@ -32,7 +33,7 @@ class FirebaseSegmentRepository extends SegmentRepository{
     }
 
     // Return the created segment
-    return Segment(name: name, order: order, id: id);
+    return Segment(name: name, order: order, id: id, distance: null);
   }
 
   @override

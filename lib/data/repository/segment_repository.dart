@@ -5,6 +5,7 @@ abstract class SegmentRepository {
     required String id,
     required String name,
     required int order,
+    required int? distance,
   });
   Future<List<Segment>> removeSegment({required String id});
   Future<List<Segment>> getSegment();

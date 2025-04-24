@@ -54,7 +54,7 @@ class FirebaseParticipantRepository extends ParticipantRepository{
   }
 
   @override
-  Future<Participant> addParticipant({required String firstName, required String lastName, required int age, required int bibNumber, required String gender, required Map<String, Duration> segmentTimes}) async {
+  Future<Participant> addParticipant({required String id, required String firstName, required String lastName, required int age, required int bibNumber, required String gender, required Map<String, Duration> segmentTimes}) async {
     Uri uri = Uri.parse(allParticipantUrl);
 
     final bibNumber = await _getNextBibWithETag();
