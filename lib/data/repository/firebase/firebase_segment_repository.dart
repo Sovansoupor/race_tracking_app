@@ -19,6 +19,7 @@ class FirebaseSegmentRepository extends SegmentRepository{
       'name': name,
       'order': order,
       'id': id,
+      'activityType': ActivityType.swimming,
       'distance': null,
     };
     final http.Response response = await http.post(
@@ -33,7 +34,7 @@ class FirebaseSegmentRepository extends SegmentRepository{
     }
 
     // Return the created segment
-    return Segment(name: name, order: order, id: id, distance: null);
+    return Segment(name: name, order: order, id: id, activityType: ActivityType.swimming, distance: null);
   }
 
   @override
