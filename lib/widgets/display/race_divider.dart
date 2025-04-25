@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../theme/theme.dart';
 
-class RiceDivider extends StatelessWidget {
-  const RiceDivider({super.key});
+class RaceDivider extends StatelessWidget {
+  const RaceDivider({super.key});
 
   @override
   Widget build(BuildContext context) {
