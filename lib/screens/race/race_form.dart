@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../models/segment/segment.dart';
 import '../../theme/theme.dart';
+import '../../widgets/action/race_button.dart';
 import '../../widgets/input/textfield_input.dart';
 
 class RaceForm extends StatefulWidget {
@@ -99,7 +100,7 @@ class _RaceFormState extends State<RaceForm> {
 // Build form body
   Widget _buildFormBody() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -174,7 +175,6 @@ class _RaceFormState extends State<RaceForm> {
                               activityType: type,
                             ),
                       );
-
                       setState(() {
                         if (_selectedSegments.contains(existing)) {
                           _selectedSegments.remove(existing);
@@ -218,6 +218,7 @@ class _RaceFormState extends State<RaceForm> {
 
           //Add button
           const Spacer(),
+          RaceButton(onPressed: (){}, text: 'Add',)
 
         ],
       ),
