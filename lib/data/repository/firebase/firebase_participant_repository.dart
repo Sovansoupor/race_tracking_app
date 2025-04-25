@@ -5,10 +5,12 @@ import 'package:race_tracking_app/data/dto/participant_dto.dart';
 import 'package:race_tracking_app/data/repository/participant_repository.dart';
 import 'package:race_tracking_app/models/participant/participant.dart';
 
-class FirebaseParticipantRepository extends ParticipantRepository{
-  static const String baseUrl = 'https://flutter2-race-tracking-app-default-rtdb.asia-southeast1.firebasedatabase.app/';
+class FirebaseParticipantRepository extends ParticipantRepository {
+  static const String baseUrl =
+      'https://flutter2-race-tracking-app-default-rtdb.asia-southeast1.firebasedatabase.app/';
   static const String participantCollection = "Participant";
-  static const String allParticipantUrl = '$baseUrl/$participantCollection.json';
+  static const String allParticipantUrl =
+      '$baseUrl/$participantCollection.json';
   static const String bibCounterUrl = '$baseUrl/bibCounter.json';
 
   /// 1) HEAD → GET-current → PUT-increment with If-Match
@@ -31,15 +33,12 @@ class FirebaseParticipantRepository extends ParticipantRepository{
       throw Exception('Could not read bibCounter');
     }
     final current = (json.decode(getResp.body) as int?) ?? 0;
-    final next    = current + 1;
+    final next = current + 1;
 
     // c) PUT back incremented value, guarded by ETag
     final putResp = await http.put(
       uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'If-Match':     etag,
-      },
+      headers: {'Content-Type': 'application/json', 'If-Match': etag},
       body: json.encode(next),
     );
 
@@ -54,7 +53,15 @@ class FirebaseParticipantRepository extends ParticipantRepository{
   }
 
   @override
-  Future<Participant> addParticipant({required String id, required String firstName, required String lastName, required int age, required int bibNumber, required String gender, required Map<String, Duration> segmentTimes}) async {
+  Future<Participant> addParticipant({
+    required String id,
+    required String firstName,
+    required String lastName,
+    required int age,
+    required int bibNumber,
+    required String gender,
+    required Map<String, Duration> segmentTimes,
+  }) async {
     Uri uri = Uri.parse(allParticipantUrl);
 
     final bibNumber = await _getNextBibWithETag();
@@ -66,7 +73,9 @@ class FirebaseParticipantRepository extends ParticipantRepository{
       'age': age,
       'gender': gender,
       'bibNumber': bibNumber,
-      'segmentTimes':segmentTimes.map((key, value) => MapEntry(key, value.inMilliseconds)),
+      'segmentTimes': segmentTimes.map(
+        (key, value) => MapEntry(key, value.inMilliseconds),
+      ),
     };
     final http.Response response = await http.post(
       uri,
@@ -82,7 +91,15 @@ class FirebaseParticipantRepository extends ParticipantRepository{
     final newId = json.decode(response.body)['name'];
 
     // Return created participant
-    return Participant(segmentTimes, firstName: firstName, lastName: lastName, gender: gender, id: newId, age: age, bibNumber: bibNumber);
+    return Participant(
+      segmentTimes,
+      firstName: firstName,
+      lastName: lastName,
+      gender: gender,
+      id: newId,
+      age: age,
+      bibNumber: bibNumber,
+    );
   }
 
   @override
@@ -91,7 +108,8 @@ class FirebaseParticipantRepository extends ParticipantRepository{
     final http.Response response = await http.get(uri);
 
     // Handle errors
-    if (response.statusCode != HttpStatus.ok && response.statusCode != HttpStatus.created) {
+    if (response.statusCode != HttpStatus.ok &&
+        response.statusCode != HttpStatus.created) {
       throw Exception('Failed to load');
     }
 
@@ -99,7 +117,9 @@ class FirebaseParticipantRepository extends ParticipantRepository{
     final data = json.decode(response.body) as Map<String, dynamic>?;
 
     if (data == null) return [];
-    return data.entries.map((entry) => ParticipantDto.fromJson(entry.key, entry.value)).toList();
+    return data.entries
+        .map((entry) => ParticipantDto.fromJson(entry.key, entry.value))
+        .toList();
   }
 
   @override
@@ -114,6 +134,64 @@ class FirebaseParticipantRepository extends ParticipantRepository{
 
     // Fetch the updated list of participants after deletion
     return await getParticipant();
+  }
 
+  @override
+  Future<Participant> editParticipant({
+    required String id,
+    required String firstName,
+    required String lastName,
+    required int age,
+    required String gender,
+  }) async {
+    Uri uri = Uri.parse('$baseUrl/$participantCollection/$id.json');
+
+    // Fetch existing data
+    final http.Response getResponse = await http.get(uri);
+    if (getResponse.statusCode != HttpStatus.ok) {
+      throw Exception('Failed to load participant');
+    }
+
+    final existingData = json.decode(getResponse.body) as Map<String, dynamic>?;
+    if (existingData == null) {
+      throw Exception('Participant not found');
+    }
+
+    // Extract segmentTimes and bibNumber from existing data
+    final segmentTimes = (existingData['segmentTimes'] as Map<String, dynamic>)
+        .map((key, value) => MapEntry(key, Duration(milliseconds: value)));
+    final bibNumber = existingData['bibNumber'];
+
+    // Merge the updates with existing data
+    final updatedParticipantData = {
+      ...existingData,
+      'firstName': firstName,
+      'lastName': lastName,
+      'age': age,
+      'gender': gender,
+    };
+
+    // Send the updated data back to Firebase
+    final http.Response putResponse = await http.put(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(updatedParticipantData),
+    );
+
+    // Handle errors
+    if (putResponse.statusCode != HttpStatus.ok) {
+      throw Exception('Failed to edit participant');
+    }
+
+    // return await getParticipant();
+    return Participant(
+    segmentTimes,
+    firstName: firstName,
+    lastName: lastName,
+    gender: gender,
+    id: id,
+    age: age,
+    bibNumber: bibNumber,
+  );
   }
 }
