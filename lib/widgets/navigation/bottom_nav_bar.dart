@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../provider/race/race_provider.dart';
 import '../../screens/home/home_screen.dart';
 import '../../screens/result/result_screen.dart';
 import 'package:race_tracking_app/theme/theme.dart';
@@ -31,19 +33,16 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    final widgetOptions = const [
-      HomeScreen(username: '', competitions: [],),
-      ResultScreen(),
-      ProfileScreen(),
+    final widgetOptions = [
+      HomeScreen(username: '', competitions: []),
+      const ResultScreen(),
+      const ProfileScreen(),
     ];
 
     return Scaffold(
       body: Container(
         color: RaceColors.backgroundAccent,
-        child: IndexedStack(
-          index: _selectedIndex,
-          children: widgetOptions,
-        ),
+        child: IndexedStack(index: _selectedIndex, children: widgetOptions),
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -59,9 +58,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
         ),
         child: BottomNavigationBar(
           items: [
-          _buildNavItem('assets/icon/home_icon.png', 'Home', 0),
-           _buildNavItem('assets/icon/result_icon.png', 'Result', 1),
-           _buildNavItem('assets/icon/time_icon.png', 'Time', 2),
+            _buildNavItem('assets/icon/home_icon.png', 'Home', 0),
+            _buildNavItem('assets/icon/result_icon.png', 'Result', 1),
+            _buildNavItem('assets/icon/time_icon.png', 'Time', 2),
           ],
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
@@ -83,17 +82,21 @@ class _BottomNavBarState extends State<BottomNavBar> {
     );
   }
 
-  BottomNavigationBarItem _buildNavItem(String assetPath, String label, int index) {
+  BottomNavigationBarItem _buildNavItem(
+    String assetPath,
+    String label,
+    int index,
+  ) {
     final isSelected = _selectedIndex == index;
 
     return BottomNavigationBarItem(
       icon: Image.asset(
-         assetPath,
-      width: 28,
-      height: 28,
+        assetPath,
+        width: 28,
+        height: 28,
         color: RaceColors.primary,
       ),
-    
+
       label: isSelected ? label : '',
     );
   }
