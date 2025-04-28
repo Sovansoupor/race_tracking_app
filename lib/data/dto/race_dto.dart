@@ -5,7 +5,7 @@ class RaceDto {
     return Race(
       id: id,
       name: json['name'] ?? 'Unknown',
-      startTime: json['startTime'] ?? DateTime.now(),
+      startTime: DateTime.parse(json['startTime'] ?? DateTime.now().toIso8601String()),
       participantIds: List<String>.from(json['participantIds'] ?? []),
       segments: List<String>.from(json['segments'] ?? []),
     );

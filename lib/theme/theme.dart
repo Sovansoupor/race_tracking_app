@@ -58,13 +58,14 @@ class RaceTextStyles {
 
   static TextStyle label = GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500);
 
-  static TextStyle button = GoogleFonts.dmSans(fontSize: 17, fontWeight: FontWeight.w600);
+  static TextStyle button = GoogleFonts.dmSans(fontSize: 17, fontWeight: FontWeight.w700);
 }
 
 ///
 /// Definition of Spacings for RaceTheme.
 ///
 class RaceSpacings {
+  static const double xs = 8;
   static const double s = 12;
   static const double m = 18; 
   static const double l = 24; 

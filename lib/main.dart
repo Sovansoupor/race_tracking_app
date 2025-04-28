@@ -1,29 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:race_tracking_app/firebase_options.dart';
-import 'package:race_tracking_app/provider/participant%20provider/participant_provider.dart';
-import 'package:race_tracking_app/screens/race/race_details.dart';
-import 'package:race_tracking_app/screens/time%20tracker/timer/time_tracking_screen.dart';
-import 'package:race_tracking_app/theme/theme.dart';
+import 'package:race_tracking_app/widgets/navigation/bottom_nav_bar.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  runApp(
-    ChangeNotifierProvider(
-      create: (context) => ParticipantProvider(),
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: raceTheme,
-        home: Scaffold(
-          // body: Center(child: RaceDetails(participants: [],)),
-          body: Center(child: TimeTrackingScreen()),
-        ),
-      ),
-    ),
-  );
+void main() {
+  // final ParticipantRepository participantRepository = FirebaseParticipantRepository();
+//runApp(MaterialApp(home: RaceForm(), debugShowCheckedModeBanner: false,));
+  runApp(MaterialApp(home: BottomNavBar(), debugShowCheckedModeBanner: false,));
 }
