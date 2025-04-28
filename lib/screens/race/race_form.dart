@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/segment/segment.dart';
+import '../../provider/race/race_provider.dart';
 import '../../theme/theme.dart';
 import '../../widgets/action/race_button.dart';
 import '../../widgets/input/textfield_input.dart';
@@ -14,91 +15,45 @@ class RaceForm extends StatefulWidget {
 }
 
 class _RaceFormState extends State<RaceForm> {
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _dateController = TextEditingController();
-  DateTime? _selectedDate;
-
-  // Selected segments
-  final Set<Segment> _selectedSegments = {};
-
   @override
   void initState() {
     super.initState();
   }
 
   @override
-  void dispose() {
-    _nameController.dispose();
-    _dateController.dispose();
-    super.dispose();
-  }
-
-  // Show date picker
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: Color(0xFFE25E3E), // Calendar header and selected day
-              onPrimary: Colors.white, // Text on primary color
-              surface: Color(0xFF172331), // Dialog background
-              onSurface: Colors.white, // Regular text
-            ),
-            dialogBackgroundColor: const Color(0xFF172331),
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => RaceProvider(),
+      child: Scaffold(
+        backgroundColor: RaceColors.backgroundAccent,
+        appBar: AppBar(
+          centerTitle: false,
+          title: Text(
+            "Add Race",
+            style: RaceTextStyles.subheadline.copyWith(color: Colors.white),
           ),
-          child: child!,
-        );
-      },
+          backgroundColor: Colors.transparent,
+          leading: IconButton(
+            icon: const Icon(Icons.chevron_left, size: 35, color: Colors.white),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ),
+        body: _buildFormBody(),
+      ),
     );
-
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-        _dateController.text = DateFormat('dd/MM/yy').format(picked);
-      });
-    }
   }
+}
 
-  // // Toggle segment selection
-  // void _toggleSegment(Segment segment) {
-  //   setState(() {
-  //     if (_selectedSegments.contains(segment)) {
-  //       _selectedSegments.remove(segment);
-  //     } else {
-  //       _selectedSegments.add(segment);
-  //     }
-  //   });
-  // }
+// Build form body
+class _buildFormBody extends StatelessWidget {
+  const _buildFormBody();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: RaceColors.backgroundAccent,
-      appBar: AppBar(
-        centerTitle: false,
-        title: Text(
-          "Add Race",
-          style: RaceTextStyles.subheadline.copyWith(color: Colors.white),
-        ),
-        backgroundColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.chevron_left, size: 35, color: Colors.white),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-      ),
-      body: _buildFormBody(),
-    );
-  }
+    final raceForm = Provider.of<RaceProvider>(context);
 
-// Build form body
-  Widget _buildFormBody() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Column(
@@ -107,7 +62,7 @@ class _RaceFormState extends State<RaceForm> {
           const SizedBox(height: RaceSpacings.m),
           // Race Name
           TextfieldInput(
-            controller: _nameController,
+            controller: raceForm.nameController,
             label: ("Race Name"),
             hint: ("Type here..."),
           ),
@@ -120,7 +75,7 @@ class _RaceFormState extends State<RaceForm> {
           ),
           SizedBox(height: RaceSpacings.s),
           TextField(
-            controller: _dateController,
+            controller: raceForm.startTimeController,
             readOnly: true,
             style: RaceTextStyles.label.copyWith(color: Colors.black),
             decoration: InputDecoration(
@@ -141,10 +96,10 @@ class _RaceFormState extends State<RaceForm> {
                   Icons.calendar_month_rounded,
                   color: RaceColors.primary,
                 ),
-                onPressed: () => _selectDate(context),
+                onPressed: () => _selectDate(context, raceForm),
               ),
             ),
-            onTap: () => _selectDate(context),
+            onTap: () => _selectDate(context, raceForm),
           ),
 
           // Segments Selection
@@ -159,39 +114,33 @@ class _RaceFormState extends State<RaceForm> {
             runSpacing: 10,
             children:
                 ActivityType.values.map((type) {
-                  final isSelected = _selectedSegments.any(
+                  final isSelected = raceForm.selectedSegments.any(
                     (segment) => segment.activityType == type,
                   );
                   return GestureDetector(
-                    onTap: () {
-                      final existing = _selectedSegments.firstWhere(
-                        (segment) => segment.activityType == type,
-                        orElse:
-                            () => Segment(
-                              id: '',
-                              name: '',
-                              order: 0,
-                              distance: null,
-                              activityType: type,
-                            ),
-                      );
-                      setState(() {
-                        if (_selectedSegments.contains(existing)) {
-                          _selectedSegments.remove(existing);
-                        } else {
-                          _selectedSegments.add(existing);
-                        }
-                      });
-                    },
+                    onTap:
+                        () => raceForm.toggleSegment(
+                          Segment(
+                            id: type.name,
+                            name: type.label,
+                            order: 0,
+                            distance: null,
+                            activityType: type,
+                          ),
+                        ),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 25,
+                        horizontal: 16,
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
                         color:
-                            isSelected ? RaceColors.functional : Colors.white,
-                        borderRadius: BorderRadius.circular(RaceSpacings.radius),
+                            isSelected
+                                ? RaceColors.functional
+                                : RaceColors.neutralDark,
+                        borderRadius: BorderRadius.circular(
+                          RaceSpacings.radius,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -200,13 +149,22 @@ class _RaceFormState extends State<RaceForm> {
                             const Icon(
                               Icons.check,
                               color: Colors.white,
-                              size: 18,
+                              size: 20,
                             ),
                           if (isSelected) const SizedBox(width: 8),
+                          Icon(
+                            type.icon, // Add the icon here based on activity type
+                            color:
+                                isSelected
+                                    ? Colors.white
+                                    : RaceColors.textNormal,
+                            size: 20, // Adjust size as needed
+                          ),
+                          const SizedBox(width: 8),
                           Text(
-                            type.label, 
+                            type.label,
                             style: RaceTextStyles.label.copyWith(
-                              color: isSelected ? Colors.white : RaceColors.grey,
+                              color: RaceColors.white,
                             ),
                           ),
                         ],
@@ -216,12 +174,55 @@ class _RaceFormState extends State<RaceForm> {
                 }).toList(),
           ),
 
-          //Add button
+          // Add button
           const Spacer(),
-          RaceButton(onPressed: (){}, text: 'Add',)
+          RaceButton(
+            onPressed: () async {
+              try {
+                // Submit the race
+                await raceForm.submitRace();
 
+                // Notify listeners in RaceProvider
+                Provider.of<RaceProvider>(context, listen: false).fetchRaces();
+
+                // Go back to the previous screen
+                Navigator.of(context).pop();
+              } catch (e) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(e.toString())));
+              }
+            },
+            text: 'Add',
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _selectDate(BuildContext context, RaceProvider raceForm) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: raceForm.startTime ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: RaceColors.primary,
+              onPrimary: Colors.white,
+              surface: const Color(0xFF172331),
+              onSurface: Colors.white,
+            ),
+            dialogBackgroundColor: const Color(0xFF172331),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      raceForm.updateStartTime(picked);
+    }
   }
 }

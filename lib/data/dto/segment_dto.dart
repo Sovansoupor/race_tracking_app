@@ -4,10 +4,10 @@ class SegmentDto {
   static Segment fromJson(String id, Map<String, dynamic> json) {
     return Segment(
       id: id,
-      name: json['name'] ?? 'Unknown',
-      order: json['order'] ?? 0,
-      distance: json['distance'] ?? null,
-      activityType: json['activityType'] != null
+      name: json['name'] as String? ?? 'Unknown',
+      order: json['order'] as int? ?? 0,
+      distance: json['distance'] as int? ?? null,
+      activityType: json['activityType'] as ActivityType != null
           ? ActivityType.values.firstWhere((e) => e.toString() == 'ActivityType.${json['activityType']}')
           : ActivityType.running,
     );
