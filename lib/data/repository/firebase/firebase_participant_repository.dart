@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:firebase_database/firebase_database.dart' hide Transaction;
 import 'package:http/http.dart' as http;
 import 'package:race_tracking_app/data/dto/participant_dto.dart';
 import 'package:race_tracking_app/data/repository/participant_repository.dart';
@@ -11,45 +12,19 @@ class FirebaseParticipantRepository extends ParticipantRepository {
   static const String participantCollection = "Participant";
   static const String allParticipantUrl =
       '$baseUrl/$participantCollection.json';
-  static const String bibCounterUrl = '$baseUrl/bibCounter.json';
 
-  /// 1) HEAD → GET-current → PUT-increment with If-Match
-  Future<int> _getNextBibWithETag() async {
-    final uri = Uri.parse(bibCounterUrl);
+  Future<int> _getNextBib() async {
+    final bibCounterRef = FirebaseDatabase.instance.ref('bibCounter');
 
-    // a) HEAD to fetch the current ETag
-    final headResp = await http.head(uri);
-    if (headResp.statusCode != HttpStatus.ok) {
-      throw Exception('Could not fetch ETag for bibCounter');
-    }
-    final etag = headResp.headers['etag'];
-    if (etag == null) {
-      throw Exception('No ETag header returned for bibCounter');
-    }
+    // Fetch the current bibCounter
+    final bibCounterSnapshot = await bibCounterRef.get();
+    int currentVal = (bibCounterSnapshot.value as int?) ?? 0;
 
-    // b) GET current value
-    final getResp = await http.get(uri);
-    if (getResp.statusCode != HttpStatus.ok) {
-      throw Exception('Could not read bibCounter');
-    }
-    final current = (json.decode(getResp.body) as int?) ?? 0;
-    final next = current + 1;
+    // Increment the bibCounter
+    final nextBib = currentVal + 1;
+    await bibCounterRef.set(nextBib);
 
-    // c) PUT back incremented value, guarded by ETag
-    final putResp = await http.put(
-      uri,
-      headers: {'Content-Type': 'application/json', 'If-Match': etag},
-      body: json.encode(next),
-    );
-
-    if (putResp.statusCode == HttpStatus.preconditionFailed) {
-      throw Exception('bibCounter was modified by another client; retry');
-    }
-    if (putResp.statusCode != HttpStatus.ok) {
-      throw Exception('Failed to update bibCounter');
-    }
-
-    return next;
+    return nextBib;
   }
 
   @override
@@ -64,15 +39,16 @@ class FirebaseParticipantRepository extends ParticipantRepository {
   }) async {
     Uri uri = Uri.parse(allParticipantUrl);
 
-    final bibNumber = await _getNextBibWithETag();
+    // Assign a new BIB number
+    final assignedBib = await _getNextBib();
 
-    // Create a new data
+    // Create a new participant
     final newParticipantData = {
       'firstName': firstName,
       'lastName': lastName,
       'age': age,
       'gender': gender,
-      'bibNumber': bibNumber,
+      'bibNumber': assignedBib,
       'segmentTimes': segmentTimes.map(
         (key, value) => MapEntry(key, value.inMilliseconds),
       ),
@@ -85,6 +61,7 @@ class FirebaseParticipantRepository extends ParticipantRepository {
 
     // Handle errors
     if (response.statusCode != HttpStatus.ok) {
+      print("HTTP POST failed: ${response.statusCode}, ${response.body}");
       throw Exception('Failed to add participant');
     }
     // Firebase returns the new ID in 'name'
@@ -125,15 +102,75 @@ class FirebaseParticipantRepository extends ParticipantRepository {
   @override
   Future<List<Participant>> removeParticipant({required String id}) async {
     Uri uri = Uri.parse('$baseUrl/$participantCollection/$id.json');
-    final http.Response response = await http.delete(uri);
 
-    // Handle errors
-    if (response.statusCode != HttpStatus.ok) {
-      throw Exception('Failed to delete course');
+    // Delete the participant
+    final http.Response deleteResponse = await http.delete(uri);
+    if (deleteResponse.statusCode != HttpStatus.ok) {
+      throw Exception('Failed to delete participant');
     }
 
-    // Fetch the updated list of participants after deletion
-    return await getParticipant();
+    // Fetch all remaining participants
+    final participantsUri = Uri.parse(allParticipantUrl);
+    final http.Response getResponse = await http.get(participantsUri);
+
+    if (getResponse.statusCode != HttpStatus.ok) {
+      throw Exception('Failed to fetch participants after deletion');
+    }
+
+    final data = json.decode(getResponse.body) as Map<String, dynamic>?;
+
+    /// If the list is empty, reset the bibCounter
+    final bibCounterRef = FirebaseDatabase.instance.ref('bibCounter');
+    if (data == null || data.isEmpty) {
+      await bibCounterRef.set(0); // Reset the bibCounter to 0
+      return [];
+    }
+
+    // Convert to a list of participants
+    final participants =
+        data.entries
+            .map((entry) => ParticipantDto.fromJson(entry.key, entry.value))
+            .toList();
+
+    // Sort participants by their current BIB number (or any other criteria)
+    participants.sort((a, b) => a.bibNumber.compareTo(b.bibNumber));
+
+    // Reassign BIB numbers sequentially starting from 1
+    for (int i = 0; i < participants.length; i++) {
+      final participant = participants[i];
+      final updatedBibNumber = i + 1;
+
+      // Update the participant's BIB number in Firebase
+      final participantUri = Uri.parse(
+        '$baseUrl/$participantCollection/${participant.id}.json',
+      );
+      final updatedData = {
+        'firstName': participant.firstName,
+        'lastName': participant.lastName,
+        'age': participant.age,
+        'gender': participant.gender,
+        'bibNumber': updatedBibNumber,
+        'segmentTimes': participant.segmentTimes.map(
+          (key, value) => MapEntry(key, value.inMilliseconds),
+        ),
+      };
+
+      final http.Response updateResponse = await http.put(
+        participantUri,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(updatedData),
+      );
+
+      if (updateResponse.statusCode != HttpStatus.ok) {
+        throw Exception('Failed to update participant BIB number');
+      }
+    }
+
+    // Update the bibCounter to match the number of remaining participants
+    await bibCounterRef.set(participants.length);
+
+    // Fetch the updated list of participants
+    return participants;
   }
 
   @override
@@ -158,8 +195,10 @@ class FirebaseParticipantRepository extends ParticipantRepository {
     }
 
     // Extract segmentTimes and bibNumber from existing data
-    final segmentTimes = (existingData['segmentTimes'] as Map<String, dynamic>)
-        .map((key, value) => MapEntry(key, Duration(milliseconds: value)));
+    final segmentTimes =
+        (existingData['segmentTimes'] as Map<String, dynamic>? ?? {}).map(
+          (key, value) => MapEntry(key, Duration(milliseconds: value)),
+        );
     final bibNumber = existingData['bibNumber'];
 
     // Merge the updates with existing data
@@ -185,13 +224,13 @@ class FirebaseParticipantRepository extends ParticipantRepository {
 
     // return await getParticipant();
     return Participant(
-    segmentTimes,
-    firstName: firstName,
-    lastName: lastName,
-    gender: gender,
-    id: id,
-    age: age,
-    bibNumber: bibNumber,
-  );
+      segmentTimes,
+      firstName: firstName,
+      lastName: lastName,
+      id: id,
+      gender: gender,
+      age: age,
+      bibNumber: bibNumber,
+    );
   }
 }
