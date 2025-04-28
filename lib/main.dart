@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:race_tracking_app/firebase_options.dart';
 import 'package:race_tracking_app/provider/participant%20provider/participant_provider.dart';
 import 'package:race_tracking_app/screens/race/race_details.dart';
+import 'package:race_tracking_app/screens/time%20tracker/timer/time_tracking_screen.dart';
 import 'package:race_tracking_app/theme/theme.dart';
 
 void main() async {
@@ -11,7 +12,6 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
- //final participantRepository = FirebaseParticipantRepository();
 
   runApp(
     ChangeNotifierProvider(
@@ -20,7 +20,8 @@ void main() async {
         debugShowCheckedModeBanner: false,
         theme: raceTheme,
         home: Scaffold(
-          body: Center(child: RaceDetails(participants: [],)),
+          // body: Center(child: RaceDetails(participants: [],)),
+          body: Center(child: TimeTrackingScreen()),
         ),
       ),
     ),

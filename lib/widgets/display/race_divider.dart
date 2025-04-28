@@ -8,7 +8,7 @@ class RaceDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Divider(
       height: 1,
-      thickness: 1,
+      thickness: 0.25,
       color: RaceColors.white,
     );
   }
