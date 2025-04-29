@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:race_tracking_app/screens/time%20tracker/timer/time_tracking_screen.dart';
+import 'package:race_tracking_app/screens/time%20tracker/time_tracking_screen.dart';
 import '../../provider/race/race_provider.dart';
 import '../../screens/home/home_screen.dart';
 import '../../screens/result/result_screen.dart';
