@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
-enum ActivityType { running, cycling, swimming, flying }
+enum ActivityType { swimming, cycling, running, flying }
 
 extension SegmentTypeExtension on ActivityType {
   String get label {
     switch (this) {
+      case ActivityType.swimming:
+        return 'Swimming';
       case ActivityType.running:
         return 'Running';
       case ActivityType.cycling:
         return 'Cycling';
-      case ActivityType.swimming:
-        return 'Swimming';
       case ActivityType.flying:
         return 'Flying';
     }
@@ -18,12 +18,12 @@ extension SegmentTypeExtension on ActivityType {
 
   IconData get icon {
     switch (this) {
+      case ActivityType.swimming:
+        return Icons.pool; // Icon for Swimming
       case ActivityType.running:
         return Icons.directions_run; // Icon for Running
       case ActivityType.cycling:
         return Icons.directions_bike; // Icon for Cycling
-      case ActivityType.swimming:
-        return Icons.pool; // Icon for Swimming
       case ActivityType.flying:
         return Icons.airplanemode_active; // Icon for Flying
       default:
