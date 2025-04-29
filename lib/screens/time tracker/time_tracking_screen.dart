@@ -20,6 +20,8 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
     final currentActivityType = segmentProvider.activityType;
     final currentViewMode = segmentProvider.viewMode;
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: RaceColors.backgroundAccent,
       appBar: AppBar(
@@ -116,4 +118,3 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
     );
   }
 }
-
