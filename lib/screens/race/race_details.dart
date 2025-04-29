@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:race_tracking_app/models/participant/participant.dart';
 import 'package:race_tracking_app/provider/participant%20provider/participant_provider.dart';
+import 'package:race_tracking_app/provider/segment/segment_provider.dart';
 import 'package:race_tracking_app/screens/participant/participant_form.dart';
 import 'package:race_tracking_app/theme/theme.dart';
 import 'package:race_tracking_app/widgets/action/race_button.dart';
@@ -135,6 +136,7 @@ class RaceDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final participantProvider = context.watch<ParticipantProvider>();
+    final selectedSegment = context.watch<SegmentProvider>();
 
     Widget content = const Center(child: Text(''));
 

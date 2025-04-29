@@ -1,9 +1,25 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:race_tracking_app/provider/participant%20provider/participant_provider.dart';
+import 'package:race_tracking_app/provider/race/race_provider.dart';
+import 'package:race_tracking_app/provider/segment/segment_provider.dart';
 import 'package:race_tracking_app/widgets/navigation/bottom_nav_bar.dart';
 
 void main() {
-  // final ParticipantRepository participantRepository = FirebaseParticipantRepository();
-//runApp(MaterialApp(home: RaceForm(), debugShowCheckedModeBanner: false,));
-  runApp(MaterialApp(home: BottomNavBar(), debugShowCheckedModeBanner: false,));
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => SegmentProvider()),
+        ChangeNotifierProvider(create: (_) => RaceProvider()),
+        ChangeNotifierProvider(create: (_) => ParticipantProvider())
+      ],
+      child: const MyApp(),
+    ),
+  );
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp();
+  @override
+  Widget build(BuildContext c) => MaterialApp(home: const BottomNavBar(), debugShowCheckedModeBanner: false,);
 }
