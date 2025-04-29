@@ -9,6 +9,8 @@ class RaceColors {
   static Color functional         = const Color(0xFF872822);
 
   static Color backgroundAccent   = const Color(0xFF0F232E);
+  static Color backgroundAccentDark   = const Color(0xFF101F28);
+
 
   static Color neutralDark        = const Color(0xFF2E3F48);
 
@@ -56,13 +58,14 @@ class RaceTextStyles {
 
   static TextStyle label = GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500);
 
-  static TextStyle button = GoogleFonts.dmSans(fontSize: 17, fontWeight: FontWeight.w600);
+  static TextStyle button = GoogleFonts.dmSans(fontSize: 17, fontWeight: FontWeight.w700);
 }
 
 ///
 /// Definition of Spacings for RaceTheme.
 ///
 class RaceSpacings {
+  static const double xs = 8;
   static const double s = 12;
   static const double m = 18; 
   static const double l = 24; 

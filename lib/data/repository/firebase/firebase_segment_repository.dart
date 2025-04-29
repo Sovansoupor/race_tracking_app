@@ -11,14 +11,14 @@ class FirebaseSegmentRepository extends SegmentRepository{
   static const String segmentCollection = "Segment";
   static const String allSegmentUrl = '$baseUrl/$segmentCollection.json';
   @override
-  Future<Segment> addSegment({required String name, required int order, required String id, required int? distance}) async {
+  Future<Segment> addSegment({required String name, required int order, required ActivityType activityType, required int? distance}) async {
     Uri uri = Uri.parse(allSegmentUrl);
 
     // Create a new data
     final newSegmentData = {
       'name': name,
       'order': order,
-      'id': id,
+      'activityType': activityType.name,
       'distance': null,
     };
     final http.Response response = await http.post(
@@ -31,9 +31,13 @@ class FirebaseSegmentRepository extends SegmentRepository{
     if (response.statusCode != HttpStatus.ok) {
       throw Exception('Failed to add segment');
     }
+    // Parse the response to get the Firebase-generated ID
+    final responseData = json.decode(response.body) as Map<String, dynamic>;
+    final String id = responseData['name']; // Firebase returns the generated ID in the 'name' field
+
 
     // Return the created segment
-    return Segment(name: name, order: order, id: id, distance: null);
+    return Segment(name: name, order: order, id: id, activityType: activityType, distance: distance);
   }
 
   @override

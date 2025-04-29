@@ -37,18 +37,25 @@ class FirebaseRaceRepository extends RaceRepository{
     return Race(id: newRaceId, name: name, participantIds: participantIds, startTime: startTime, segments: segments);
   }
 
+  
   @override
   Future<List<Race>> getRace() async {
     Uri uri = Uri.parse(allRaceUrl);
     final http.Response response = await http.get(uri);
-    // Handle the errors
-      if (response.statusCode != HttpStatus.ok && response.statusCode != HttpStatus.created) {
-        throw Exception('Failed to load');
-      }
-    // Return all race
+
+    // Handle errors
+    if (response.statusCode != HttpStatus.ok &&
+        response.statusCode != HttpStatus.created) {
+      throw Exception('Failed to load races');
+    }
+
+    // Return all races
     final data = json.decode(response.body) as Map<String, dynamic>?;
     if (data == null) return [];
-    return data.entries.map((entry) => RaceDto.fromJson(entry.key, entry.value)).toList(); 
+
+    return data.entries
+        .map((entry) => RaceDto.fromJson(entry.key, entry.value))
+        .toList();
   }
 
   @override
