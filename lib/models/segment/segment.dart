@@ -26,8 +26,6 @@ extension SegmentTypeExtension on ActivityType {
         return Icons.directions_bike; // Icon for Cycling
       case ActivityType.flying:
         return Icons.airplanemode_active; // Icon for Flying
-      default:
-        return Icons.help; // Default icon (in case something goes wrong)
     }
   }
 }

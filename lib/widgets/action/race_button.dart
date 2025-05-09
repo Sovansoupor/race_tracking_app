@@ -8,6 +8,7 @@ class RaceButton extends StatelessWidget {
   final IconData? icon;
   final VoidCallback onPressed;
   final RaceButtonType type;
+  final Color? color;
 
   const RaceButton({
     super.key,
@@ -15,13 +16,17 @@ class RaceButton extends StatelessWidget {
     this.icon,
     required this.onPressed,
     this.type = RaceButtonType.primary,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     // Define button color
     Color backGroundColor =
-        type == RaceButtonType.primary ? RaceColors.primary : RaceColors.green;
+        color ??
+        (type == RaceButtonType.primary
+            ? RaceColors.primary
+            : RaceColors.green);
     Color textColor = RaceColors.white;
     Color iconColor = RaceColors.white;
 
