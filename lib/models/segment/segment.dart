@@ -38,14 +38,35 @@ class Segment {
   final int order;
   final int? distance;
   final ActivityType activityType;
+  final String? unit; 
 
   Segment({
     required this.activityType,
     required this.id,
     required this.name,
     required this.order,
-    required this.distance,
+    this.distance,
+    this.unit
   });
+
+  // Add this copyWith method
+  Segment copyWith({
+    String? id,
+    String? name,
+    int? order,
+    int? distance,
+    ActivityType? activityType,
+    String? unit,
+  }) {
+    return Segment(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      order: order ?? this.order,
+      distance: distance ?? this.distance,
+      activityType: activityType ?? this.activityType,
+      unit: unit ?? this.unit,
+    );
+  }
 
   @override
   bool operator ==(Object other) {

@@ -11,6 +11,7 @@ class RaceColors {
   static Color backgroundAccent   = const Color(0xFF0F232E);
 
   static Color neutralDark        = const Color(0xFF2E3F48);
+  static Color neutralLight       = const Color(0xFFE2EFF7);
 
   static Color greyLight          = const Color(0xFFE1E1E1);
   static Color grey               = const Color(0xFF797979);
