@@ -10,8 +10,8 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SegmentProvider()),
-        ChangeNotifierProvider(create: (_) => RaceProvider()),
-        ChangeNotifierProvider(create: (_) => ParticipantProvider())
+        ChangeNotifierProvider(create: (_) => RaceProvider()..fetchRaces()),
+        ChangeNotifierProvider(create: (_) => ParticipantProvider()),
       ],
       child: const MyApp(),
     ),
@@ -21,5 +21,8 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp();
   @override
-  Widget build(BuildContext c) => MaterialApp(home: const BottomNavBar(), debugShowCheckedModeBanner: false,);
+  Widget build(BuildContext c) => MaterialApp(
+    home: const BottomNavBar(),
+    debugShowCheckedModeBanner: false,
+  );
 }

@@ -1,4 +1,5 @@
 import 'package:race_tracking_app/models/race/race.dart';
+import 'package:race_tracking_app/models/segment/segment.dart';
 
 class RaceDto {
   static Race fromJson(String id, Map<String, dynamic> json) {
