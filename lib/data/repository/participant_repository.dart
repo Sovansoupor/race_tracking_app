@@ -11,5 +11,12 @@ abstract class ParticipantRepository {
     required int bibNumber,
   });
   Future<List<Participant>> removeParticipant({required String id});
+  Future<Participant> editParticipant({
+    required String id,
+    required String firstName,
+    required String lastName,
+    required int age,
+    required String gender,
+  });
   Future<List<Participant>> getParticipant();
 }

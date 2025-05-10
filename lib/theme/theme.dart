@@ -9,6 +9,8 @@ class RaceColors {
   static Color functional         = const Color(0xFF872822);
 
   static Color backgroundAccent   = const Color(0xFF0F232E);
+  static Color backgroundAccentDark   = const Color(0xFF101F28);
+
 
   static Color neutralDark        = const Color(0xFF2E3F48);
   static Color neutralLight       = const Color(0xFFE2EFF7);
