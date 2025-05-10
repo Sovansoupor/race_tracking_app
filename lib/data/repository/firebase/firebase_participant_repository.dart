@@ -13,6 +13,7 @@ class FirebaseParticipantRepository extends ParticipantRepository {
   static const String allParticipantUrl =
       '$baseUrl/$participantCollection.json';
 
+   
   Future<int> _getNextBib() async {
     final bibCounterRef = FirebaseDatabase.instance.ref('bibCounter');
 

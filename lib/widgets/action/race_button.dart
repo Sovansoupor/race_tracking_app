@@ -6,7 +6,7 @@ enum RaceButtonType { primary, secondary }
 class RaceButton extends StatelessWidget {
   final String text;
   final IconData? icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final RaceButtonType type;
   final Color? color;
 
@@ -21,15 +21,23 @@ class RaceButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Define button color
-    Color backGroundColor =
-        color ??
-        (type == RaceButtonType.primary
-            ? RaceColors.primary
-            : RaceColors.green);
-    Color textColor = RaceColors.white;
-    Color iconColor = RaceColors.white;
+  final bool isDisabled = onPressed == null;
 
+    Color backGroundColor = isDisabled
+      ? RaceColors.grey
+      : color ??
+          (type == RaceButtonType.primary
+              ? RaceColors.primary
+              : RaceColors.green);
+
+    Color textColor = isDisabled
+      ? RaceColors.white.withOpacity(0.5)
+      : RaceColors.white;
+
+    Color iconColor = isDisabled
+      ? RaceColors.white.withOpacity(0.5)
+      : RaceColors.white;
+      
     // build button widget
     return OutlinedButton(
       style: OutlinedButton.styleFrom(
