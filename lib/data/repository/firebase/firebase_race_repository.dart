@@ -6,13 +6,20 @@ import 'package:race_tracking_app/data/dto/race_dto.dart';
 import 'package:race_tracking_app/data/repository/race_repository.dart';
 import 'package:race_tracking_app/models/race/race.dart';
 
-class FirebaseRaceRepository extends RaceRepository{
-  static const String baseUrl = 'https://flutter2-race-tracking-app-default-rtdb.asia-southeast1.firebasedatabase.app/';
+class FirebaseRaceRepository extends RaceRepository {
+  static const String baseUrl =
+      'https://flutter2-race-tracking-app-default-rtdb.asia-southeast1.firebasedatabase.app/';
   static const String raceCollection = "Race";
   static const String allRaceUrl = '$baseUrl/$raceCollection.json';
 
   @override
-  Future<Race> addRace({required String id, required String name, required DateTime startTime, required List<String> participantIds, required List<String> segments}) async {
+  Future<Race> addRace({
+    required String id,
+    required String name,
+    required DateTime startTime,
+    required List<String> participantIds,
+    required List<String> segments,
+  }) async {
     Uri uri = Uri.parse(allRaceUrl);
 
     //Create a new data
@@ -25,19 +32,22 @@ class FirebaseRaceRepository extends RaceRepository{
 
     final http.Response response = await http.post(
       uri,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json'},
       body: json.encode(newRaceData),
     );
     if (response.statusCode != HttpStatus.ok) {
       throw Exception('Failed to add race');
-  }
+    }
     final newRaceId = json.decode(response.body)['name'];
-    return Race(id: newRaceId, name: name, participantIds: participantIds, startTime: startTime, segments: segments);
+    return Race(
+      id: newRaceId,
+      name: name,
+      participantIds: participantIds,
+      startTime: startTime,
+      segments: segments,
+    );
   }
 
-  
   @override
   Future<List<Race>> getRace() async {
     Uri uri = Uri.parse(allRaceUrl);
@@ -59,16 +69,39 @@ class FirebaseRaceRepository extends RaceRepository{
   }
 
   @override
-  Future<List<Race>> removeRace({required String id}) async{
-   Uri uri = Uri.parse('$baseUrl/$raceCollection/$id.json');
+  Future<List<Race>> removeRace({required String id}) async {
+    Uri uri = Uri.parse('$baseUrl/$raceCollection/$id.json');
     final http.Response response = await http.delete(uri);
 
-    // Handle errors
-    if (response.statusCode != HttpStatus.ok) {
-      throw Exception('Failed to delete course');
+    if (response.statusCode != HttpStatus.ok &&
+        response.statusCode != HttpStatus.noContent) {
+      throw Exception('Failed to delete race');
     }
 
-    // Fetch the updated list of races after deletion
+    // After deletion, return the updated race list
     return await getRace();
+  }
+
+  Future<void> updateRaceSegmentDetail({
+    required String raceId,
+    required String segmentId,
+    required int distance,
+    required String unit,
+  }) async {
+    final Uri uri = Uri.parse(
+      '$baseUrl/$raceCollection/$raceId/segmentDetails/$segmentId.json',
+    );
+    final body = {
+      'distance': distance,
+      'unit': unit,
+    };
+    final response = await http.patch(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(body),
+    );
+    if (response.statusCode != HttpStatus.ok) {
+      throw Exception('Failed to update per‑race segment detail');
+    }
   }
 }

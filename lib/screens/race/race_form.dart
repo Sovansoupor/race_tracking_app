@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../models/segment/segment.dart';
 import '../../provider/race/race_provider.dart';
 import '../../theme/theme.dart';
@@ -114,7 +113,7 @@ class _buildFormBody extends StatelessWidget {
             runSpacing: 10,
             children:
                 ActivityType.values.map((type) {
-                  final isSelected = raceForm.selectedSegments.any(
+                  final isSelected = raceForm.selectedSegments.values.any(
                     (segment) => segment.activityType == type,
                   );
                   return GestureDetector(

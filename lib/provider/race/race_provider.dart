@@ -13,56 +13,75 @@ class RaceProvider extends ChangeNotifier {
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController startTimeController = TextEditingController();
+  final Map<String, TextEditingController> distanceControllers = {};
 
   DateTime? startTime;
-  final Set<Segment> selectedSegments = {};
-
-  // Update start date and text
-  void updateStartTime(DateTime date) {
-    startTime = date;
-    startTimeController.text = DateFormat('dd/MM/yy').format(date);
-    notifyListeners();
-  }
-
-  // Toggle segment selection
-  void toggleSegment(Segment segment) {
-    if (selectedSegments.contains(segment)) {
-      selectedSegments.remove(segment);
-    } else {
-      selectedSegments.add(segment);
-    }
-    notifyListeners();
-  }
-
   List<Race> _races = [];
-  List<Race> get races => _races;
+  List<Segment> allSegments = [];
 
-  // Loading and error handling
+  List<Race> get races => _races;
+  Map<String, Segment> selectedSegments = {};
+
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
   String _errorMessage = '';
   String get errorMessage => _errorMessage;
 
+  List<Segment> getSegmentsForRace(Race race) {
+    return race.segments.map((segmentId) {
+      return allSegments.firstWhere((seg) => seg.id == segmentId);
+    }).toList();
+  }
+
+  void updateStartTime(DateTime date) {
+    startTime = date;
+    startTimeController.text = DateFormat('dd/MM/yy').format(date);
+    notifyListeners();
+  }
+
+  void toggleSegment(Segment segment) {
+    if (selectedSegments.containsKey(segment.id)) {
+      selectedSegments.remove(segment.id);
+      distanceControllers.remove(segment.id);
+    } else {
+      selectedSegments[segment.id] = segment;
+      distanceControllers[segment.id] = TextEditingController(
+        text: segment.distance?.toString() ?? '',
+      );
+    }
+    notifyListeners();
+  }
+
+  Future<void> fetchSegments() async {
+    try {
+      allSegments = await _segmentRepository.getSegment();
+      print('Fetched segments: $allSegments');
+      notifyListeners();
+    } catch (e) {
+      print('Error fetching segments: $e');
+      throw Exception('Failed to fetch segments');
+    }
+  }
+
   Future<void> fetchRaces() async {
     _isLoading = true;
     notifyListeners();
-    print("Fetching races..."); 
+    print("Fetching races...");
 
     try {
       _races = await _raceRepository.getRace();
-      notifyListeners();
-      _errorMessage = ''; // Reset error message if successful
+      print('Fetched races: $_races');
+      _errorMessage = '';
     } catch (e) {
       _errorMessage = 'Error fetching races: $e';
-      print(_errorMessage); // Print error to the console for debugging
+      print(_errorMessage);
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Add a new race
   Future<void> addRace() async {
     if (nameController.text.isEmpty ||
         startTime == null ||
@@ -71,48 +90,28 @@ class RaceProvider extends ChangeNotifier {
     }
 
     try {
-      // Add new race to the repository
       final newRace = await _raceRepository.addRace(
         id: '',
         name: nameController.text,
         startTime: startTime!,
         participantIds: [],
-        segments: selectedSegments.map((segment) => segment.id).toList(),
+        segments: selectedSegments.keys.toList(),
       );
 
-      // Add the new race to the local _races list
-      _races.add(newRace); // This line adds the race directly to the list
-      notifyListeners(); // Notify listeners to update the UI
+      _races.add(newRace);
+      notifyListeners();
 
-      // Clear fields after adding the race
       nameController.clear();
       startTimeController.clear();
       startTime = null;
       selectedSegments.clear();
+      distanceControllers.clear();
     } catch (e) {
       print('Error adding race: $e');
       throw Exception('Failed to add race');
     }
   }
 
-  // Add segment
-  Future<void> addSegment({
-    required String name,
-    required int order,
-    required ActivityType activityType,
-    required int? distance,
-  }) async {
-    final Segment newSegment = await _segmentRepository.addSegment(
-      name: name,
-      order: order,
-      distance: distance,
-      activityType: activityType,
-    );
-    selectedSegments.add(newSegment);
-    notifyListeners();
-  }
-
-  // Submit race
   Future<void> submitRace() async {
     if (nameController.text.isEmpty ||
         startTime == null ||
@@ -120,33 +119,128 @@ class RaceProvider extends ChangeNotifier {
       throw Exception('Please fill in all fields');
     }
 
-    // Submit new race
     await _raceRepository.addRace(
       id: '',
       name: nameController.text,
       startTime: startTime!,
       participantIds: [],
-      segments: selectedSegments.map((segment) => segment.id).toList(),
+      segments: selectedSegments.keys.toList(),
     );
 
-    // Fetch the updated races after submission
     await fetchRaces();
 
-    // Clear fields after submission
     nameController.clear();
     startTimeController.clear();
     startTime = null;
     selectedSegments.clear();
+    distanceControllers.clear();
 
-    // Notify listeners to update the UI
     notifyListeners();
   }
 
-  // Dispose controllers when provider is destroyed
+  Future<void> deleteRace(String id) async {
+    try {
+      // Call the removeRace method with named parameter
+      await _raceRepository.removeRace(id: id);
+
+      // Remove the race locally from the list
+      _races.removeWhere((race) => race.id == id);
+
+      // Notify listeners to update the UI
+      notifyListeners();
+    } catch (e) {
+      print('Error deleting race: $e');
+      throw Exception('Failed to delete race');
+    }
+  }
+
+  Future<void> addSegment({
+    required String name,
+    required int order,
+    required ActivityType activityType,
+    required int? distance,
+    required String? unit,
+  }) async {
+    final Segment newSegment = await _segmentRepository.addSegment(
+      name: name,
+      order: order,
+      distance: distance,
+      activityType: activityType,
+      unit: unit,
+    );
+    selectedSegments[newSegment.id] = newSegment;
+    notifyListeners();
+  }
+
+  // Method to save or update segment distance
+  Future<void> saveSegmentDistance({
+    required String segmentId,
+    required String unit,
+  }) async {
+    print('Saving distance for segmentId: $segmentId');
+    print('Current selectedSegments: ${selectedSegments.keys.toList()}');
+
+    // Validate input
+    final distanceText = distanceControllers[segmentId]?.text.trim();
+    if (distanceText == null || distanceText.isEmpty) {
+      throw Exception('Distance cannot be empty.');
+    }
+
+    final int? distance = int.tryParse(distanceText);
+    if (distance == null) {
+      throw Exception('Distance must be a valid number.');
+    }
+
+    // Convert distance to meters if necessary
+    final int distanceInMeters =
+        unit.toUpperCase() == "KM" ? distance * 1000 : distance;
+
+    // Find the segment
+    final segment = selectedSegments[segmentId];
+    if (segment == null) {
+      print('Segment with id $segmentId not found in selectedSegments.');
+      throw Exception('Segment not found.');
+    }
+
+    // Update the segment's local state
+    selectedSegments[segmentId] = Segment(
+      id: segment.id,
+      name: segment.name,
+      order: segment.order,
+      activityType: segment.activityType,
+      distance: distanceInMeters,
+      unit: unit,
+    );
+
+    // Also update in allSegments if it exists there
+    final allSegmentIndex = allSegments.indexWhere((s) => s.id == segmentId);
+    if (allSegmentIndex >= 0) {
+      allSegments[allSegmentIndex] = allSegments[allSegmentIndex].copyWith(
+        distance: distanceInMeters,
+        unit: unit,
+      );
+    }
+    notifyListeners();
+    print('allSegments after save: $allSegments');
+
+    // Save the changes to Firebase using the FirebaseSegmentRepository's update method
+    try {
+      await _segmentRepository.updateSegment(
+        segmentId: segment.id,
+        updatedData: {'distance': distanceInMeters, 'unit': unit},
+      );
+    } catch (e) {
+      throw Exception('Failed to save to Firebase: $e');
+    }
+  }
+
   @override
   void dispose() {
     nameController.dispose();
     startTimeController.dispose();
+    for (var controller in distanceControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 }

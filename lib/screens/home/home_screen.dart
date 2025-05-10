@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:race_tracking_app/screens/race/race_form.dart';
 import 'package:race_tracking_app/theme/theme.dart';
+import '../../provider/race/race_provider.dart';
+import 'race_home_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final String username;
@@ -8,7 +11,7 @@ class HomeScreen extends StatelessWidget {
 
   const HomeScreen({
     required this.username,
-    required this.competitions,
+    required this.competitions, 
     super.key,
   });
 
@@ -26,59 +29,28 @@ class HomeScreen extends StatelessWidget {
           centerTitle: false,
           backgroundColor: RaceColors.backgroundAccent,
         ),
-        body:
-            competitions.isEmpty
-                ? _buildNoCompetition()
-                : _buildCompetitionList(),
+        body: RaceHomeScreen(),
 
         // floating button
         floatingActionButton: FloatingActionButton(
           backgroundColor: RaceColors.primary,
           shape: CircleBorder(),
           onPressed: () {
-            Navigator.of(context).push(MaterialPageRoute(builder: (context) => RaceForm()));
+            // After the RaceForm is completed, fetch races again
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (context) => RaceForm())).then((
+              _,
+            ) {
+              // Fetch races after returning from RaceForm
+              // for it to automatically rebuild the UI when new race to display
+              Provider.of<RaceProvider>(context, listen: false).fetchRaces();
+            });
           },
           child: const Icon(Icons.add, size: 30, color: Colors.white),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        
       ),
-    );
-  }
-
-  Widget _buildNoCompetition() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'No competition',
-            style: RaceTextStyles.body.copyWith(color: RaceColors.textNormal),
-          ),
-          Text(
-            'Create a new competition',
-            style: RaceTextStyles.label.copyWith(color: RaceColors.textNormal),
-          ),
-          Text(
-            'Tap + to create',
-            style: RaceTextStyles.label.copyWith(color: RaceColors.textNormal),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCompetitionList() {
-    return ListView.builder(
-      itemCount: competitions.length,
-      itemBuilder: (context, index) {
-        return ListTile(
-          title: Text(competitions[index]),
-          onTap: () {
-            // Handle competition selection
-          },
-        );
-      },
     );
   }
 }
