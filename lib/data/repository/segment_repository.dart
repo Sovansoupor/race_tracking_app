@@ -10,4 +10,9 @@ abstract class SegmentRepository {
   });
   Future<List<Segment>> removeSegment({required String id});
   Future<List<Segment>> getSegment();
+
+  Future<void> updateSegment({
+    required String segmentId,
+    required Map<String, dynamic> updatedData,
+  });
 }
