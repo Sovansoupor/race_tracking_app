@@ -13,7 +13,6 @@ class FirebaseParticipantRepository extends ParticipantRepository {
   static const String allParticipantUrl =
       '$baseUrl/$participantCollection.json';
 
-   
   Future<int> _getNextBib() async {
     final bibCounterRef = FirebaseDatabase.instance.ref('bibCounter');
 
@@ -181,6 +180,7 @@ class FirebaseParticipantRepository extends ParticipantRepository {
     required String lastName,
     required int age,
     required String gender,
+    Map<String, Duration>? segmentTimes,
   }) async {
     Uri uri = Uri.parse('$baseUrl/$participantCollection/$id.json');
 

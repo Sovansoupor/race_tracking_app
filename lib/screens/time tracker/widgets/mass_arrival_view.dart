@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:race_tracking_app/provider/participant%20provider/participant_provider.dart';
 import 'package:race_tracking_app/provider/segment/segment_provider.dart';
 import 'package:race_tracking_app/screens/time%20tracker/widgets/participant_grid.dart';
 import 'package:race_tracking_app/theme/theme.dart';
@@ -79,12 +80,28 @@ class MassArrivalView extends StatelessWidget {
                   text: "Confirm Arrival",
                   onPressed:
                       trackedSegments.containsValue(true)
-                          ? () {
+                          ? () async {
                             final trackedParticipants =
                                 trackedSegments.entries
                                     .where((entry) => entry.value)
                                     .map((entry) => entry.key)
                                     .toList();
+
+                            // Use current time as arrival time
+                            final now = DateTime.now();
+                            final arrivalTime = Duration(
+                              hours: now.hour,
+                              minutes: now.minute,
+                              seconds: now.second,
+                            );
+
+                            await Provider.of<ParticipantProvider>(
+                              context,
+                              listen: false,
+                            ).massTrackParticipants(
+                              arrivalTime,
+                              trackedParticipants,
+                            );
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(

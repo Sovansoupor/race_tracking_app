@@ -115,4 +115,31 @@ class ParticipantProvider extends ChangeNotifier {
     genderController.clear();
     fetchParticipants();
   }
+
+  Future<void> massTrackParticipants(
+    Duration arrivalTime,
+    List<int> participantIndexes,
+  ) async {
+    if (participantState == null || participantState!.data == null) return;
+    final participants = participantState!.data!;
+    for (final idx in participantIndexes) {
+      if (idx < 0 || idx >= participants.length) continue;
+      final participant = participants[idx];
+      // Create a new map for segmentTimes with updated arrival
+      final updatedSegmentTimes = Map<String, Duration>.from(
+        participant.segmentTimes,
+      );
+      updatedSegmentTimes["arrival"] = arrivalTime;
+      await _repository.editParticipant(
+        id: participant.id,
+        firstName: participant.firstName,
+        lastName: participant.lastName,
+        age: participant.age,
+        gender: participant.gender,
+        segmentTimes: updatedSegmentTimes,
+      );
+    }
+    fetchParticipants();
+    notifyListeners();
+  }
 }
