@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:race_tracking_app/models/race/race.dart';
 import 'package:race_tracking_app/models/segment/segment.dart';
 
 import '../../provider/race/race_provider.dart';
 import '../../theme/theme.dart';
+import '../race/race_details.dart';
 import '../race/segment_form.dart';
-
 
 class RaceHomeScreen extends StatelessWidget {
   const RaceHomeScreen({super.key});
@@ -18,13 +17,12 @@ class RaceHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double boxSize = screenWidth * 0.1;
+    // double screenWidth = MediaQuery.of(context).size.width;
+    // double boxSize = screenWidth * 0.1;
     return Consumer<RaceProvider>(
       builder: (context, raceProvider, child) {
-        
         final races = raceProvider.races;
-        final allSegments = raceProvider.selectedSegments;
+        // final allSegments = raceProvider.selectedSegments;
         if (races.isEmpty) {
           return Center(
             child: Column(
@@ -81,7 +79,18 @@ class RaceHomeScreen extends StatelessWidget {
                           ),
                           Spacer(),
                           IconButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => RaceDetails(
+                                        race: race,
+                                        participants: [],
+                                      ),
+                                ),
+                              );
+                            },
                             icon: Icon(Icons.chevron_right, size: 30),
                           ),
                         ],
@@ -98,7 +107,6 @@ class RaceHomeScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                
 
                 subtitle: Column(
                   children: [
@@ -114,7 +122,8 @@ class RaceHomeScreen extends StatelessWidget {
                             ),
                       );
 
-                      final hasDistance = segment.distance != null && segment.unit != null;
+                      final hasDistance =
+                          segment.distance != null && segment.unit != null;
                       final distanceText =
                           hasDistance
                               ? 'Distance: ${segment.distance} ${segment.unit}'

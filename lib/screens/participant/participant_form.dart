@@ -26,9 +26,12 @@ class _ParticipantFormState extends State<ParticipantForm> {
     // _participantProvider = ParticipantProvider();
     _participantProvider = context.read<ParticipantProvider>();
     if (widget.mode == formMode.edit && widget.participant != null) {
-      _participantProvider.firstNameController.text = widget.participant!.firstName;
-      _participantProvider.lastNameController.text = widget.participant!.lastName;
-      _participantProvider.ageController.text = widget.participant!.age.toString();
+      _participantProvider.firstNameController.text =
+          widget.participant!.firstName;
+      _participantProvider.lastNameController.text =
+          widget.participant!.lastName;
+      _participantProvider.ageController.text =
+          widget.participant!.age.toString();
       _participantProvider.genderController.text = widget.participant!.gender;
     }
   }
@@ -38,6 +41,7 @@ class _ParticipantFormState extends State<ParticipantForm> {
     return ChangeNotifierProvider.value(
       value: _participantProvider,
       child: Scaffold(
+        backgroundColor: RaceColors.backgroundAccent,
         appBar: AppBar(
           centerTitle: false,
           leading: IconButton(
@@ -50,13 +54,10 @@ class _ParticipantFormState extends State<ParticipantForm> {
                 : 'Add Participant',
             style: RaceTextStyles.subheadline.copyWith(color: RaceColors.white),
           ),
-          backgroundColor: Colors.transparent,
+           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
-        body: _buildForm(
-          mode: widget.mode,
-          participant: widget.participant,
-        ),
+        body: _buildForm(mode: widget.mode, participant: widget.participant),
       ),
     );
   }
@@ -72,6 +73,7 @@ class _buildForm extends StatelessWidget {
     final participantProvider = Provider.of<ParticipantProvider>(context);
     return Container(
       padding: const EdgeInsets.all(RaceSpacings.m),
+      color: RaceColors.backgroundAccent,
       child: Column(
         children: [
           TextfieldInput(
@@ -103,8 +105,7 @@ class _buildForm extends StatelessWidget {
               try {
                 if (mode == formMode.add) {
                   await participantProvider.addParticipant();
-                } else if (mode == formMode.edit &&
-                    participant != null) {
+                } else if (mode == formMode.edit && participant != null) {
                   await participantProvider.editParticipant(
                     id: participant!.id,
                     firstName: participantProvider.firstNameController.text,

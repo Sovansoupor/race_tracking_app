@@ -7,12 +7,16 @@ import 'package:race_tracking_app/screens/participant/participant_form.dart';
 import 'package:race_tracking_app/theme/theme.dart';
 import 'package:race_tracking_app/widgets/action/race_button.dart';
 
+import '../../models/race/race.dart';
+
 class RaceDetails extends StatelessWidget {
+  final Race race;
   final VoidCallback? onStartRace;
   final void Function(Participant)? onEditParticipant;
 
   const RaceDetails({
     super.key,
+    required this.race,
     this.onStartRace,
     this.onEditParticipant,
     required List participants,
@@ -219,7 +223,43 @@ class RaceDetails extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: RaceColors.backgroundAccent,
-      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(100.0),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 20),
+          child: Container(
+            margin: EdgeInsets.symmetric(horizontal: 16.0),
+            height: 70,
+            decoration: BoxDecoration(
+              color: RaceColors.neutralLight,
+              borderRadius: BorderRadius.circular(RaceSpacings.radius),
+            ),
+            child: SafeArea(
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.chevron_left,
+                      color: RaceColors.neutralDark,
+                      size: 35,
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  Expanded(
+                    child: Text(
+                      race.name,
+                      style: RaceTextStyles.body.copyWith(
+                        color: RaceColors.neutralDark,
+                      ),
+                      textAlign: TextAlign.start, // Center the title
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -254,4 +294,6 @@ class RaceDetails extends StatelessWidget {
       ),
     );
   }
+
+  void _onEditRacePressed(BuildContext context) {}
 }
