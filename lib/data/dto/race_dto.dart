@@ -1,5 +1,3 @@
-// lib/data/dto/race_dto.dart
-
 import 'package:race_tracking_app/models/race/race.dart';
 import 'package:race_tracking_app/models/segment/segment.dart';
 import 'package:race_tracking_app/data/dto/segment_dto.dart';
