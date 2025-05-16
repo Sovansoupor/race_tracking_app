@@ -13,18 +13,16 @@ class ResultTableHeader extends StatelessWidget {
     
     return Row(
       children: [
-        SizedBox(width: 76),
+        SizedBox(
+          width: 80,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text('Rank', style: headerStyle),
+          ),
+        ),
         Expanded(
-          flex: 3,
+          flex: 5,
           child: Text('Name', style: headerStyle),
-        ),
-        Expanded(
-          flex: 2,
-          child: Text('Start', style: headerStyle, textAlign: TextAlign.center),
-        ),
-        Expanded(
-          flex: 2,
-          child: Text('Finish', style: headerStyle, textAlign: TextAlign.center),
         ),
         Expanded(
           flex: 2,
