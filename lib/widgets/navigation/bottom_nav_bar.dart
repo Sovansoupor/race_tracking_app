@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:race_tracking_app/screens/time%20tracker/time_tracking_screen.dart';
 import '../../provider/race/race_provider.dart';
 import '../../screens/home/home_screen.dart';
-import '../../screens/result/result_screen.dart';
+import '../../screens/result/race_list_screen.dart';
 import 'package:race_tracking_app/theme/theme.dart';
 
 class BottomNavBar extends StatefulWidget {
@@ -35,7 +35,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
   Widget build(BuildContext context) {
     final widgetOptions = [
       HomeScreen(username: '', competitions: []),
-      const ResultScreen(),
+      const RaceListScreen(),
       const TimeTrackingScreen(),
     ];
 

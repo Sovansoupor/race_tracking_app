@@ -7,27 +7,34 @@ import 'package:race_tracking_app/data/repository/participant_repository.dart';
 import 'package:race_tracking_app/models/participant/participant.dart';
 
 class FirebaseParticipantRepository extends ParticipantRepository {
-  static const String baseUrl =
-      'https://flutter2-race-tracking-app-default-rtdb.asia-southeast1.firebasedatabase.app/';
+  static const String baseUrl ='https://flutter2-race-tracking-app-default-rtdb.asia-southeast1.firebasedatabase.app/';
   static const String participantCollection = "Participant";
-  static const String allParticipantUrl =
-      '$baseUrl/$participantCollection.json';
+  static const String allParticipantUrl ='$baseUrl/$participantCollection.json';
+  static const String bibCounterUrl = 'https://flutter2-race-tracking-app-default-rtdb.asia-southeast1.firebasedatabase.app/bibCounter.json';
 
-   
   Future<int> _getNextBib() async {
-    final bibCounterRef = FirebaseDatabase.instance.ref('bibCounter');
+    // Get current value
+    final response = await http.get(Uri.parse(bibCounterUrl));
+    if (response.statusCode != 200) {
+      throw Exception('Failed to get bibCounter');
+    }
 
-    // Fetch the current bibCounter
-    final bibCounterSnapshot = await bibCounterRef.get();
-    int currentVal = (bibCounterSnapshot.value as int?) ?? 0;
+    int currentVal = int.tryParse(response.body) ?? 0;
+    int nextBib = currentVal + 1;
 
-    // Increment the bibCounter
-    final nextBib = currentVal + 1;
-    await bibCounterRef.set(nextBib);
+    // Set new value
+    final updateResponse = await http.put(
+      Uri.parse(bibCounterUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: nextBib.toString(),
+    );
+    if (updateResponse.statusCode != 200) {
+      throw Exception('Failed to update bibCounter');
+    }
 
     return nextBib;
   }
-
+  
   @override
   Future<Participant> addParticipant({
     required String id,
