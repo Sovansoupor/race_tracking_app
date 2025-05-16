@@ -14,15 +14,29 @@ class RaceForm extends StatefulWidget {
 }
 
 class _RaceFormState extends State<RaceForm> {
+  late RaceProvider raceProvider;
+
   @override
   void initState() {
     super.initState();
+    raceProvider = RaceProvider();
+    for (var type in ActivityType.values.take(3)) {
+      raceProvider.toggleSegment(
+        Segment(
+          id: type.name,
+          name: type.label,
+          order: 0,
+          distance: null,
+          activityType: type,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => RaceProvider(),
+    return ChangeNotifierProvider.value(
+      value: raceProvider,
       child: Scaffold(
         backgroundColor: RaceColors.backgroundAccent,
         appBar: AppBar(
@@ -39,7 +53,7 @@ class _RaceFormState extends State<RaceForm> {
             },
           ),
         ),
-        body: _buildFormBody(),
+        body: const _buildFormBody(),
       ),
     );
   }

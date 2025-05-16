@@ -110,24 +110,29 @@ class RaceHomeScreen extends StatelessWidget {
 
                 subtitle: Column(
                   children: [
-                    ...race.segments.map((segmentId) {
-                      final segment = raceProvider.allSegments.firstWhere(
-                        (s) => s.id == segmentId,
-                        orElse:
-                            () => Segment(
-                              id: segmentId,
-                              name: segmentId,
-                              order: 0,
-                              activityType: ActivityType.running,
-                            ),
-                      );
-
+                    ...race.segments.map((segment) {
                       final hasDistance =
                           segment.distance != null && segment.unit != null;
-                      final distanceText =
+
+                      // Provide default distances by activity type if distance is null
+                      final defaultDistance = switch (segment.activityType) {
+                        ActivityType.swimming => 2,
+                        ActivityType.running => 10,
+                        ActivityType.cycling => 20,
+                        _ => 0,
+                      };
+
+                      final distanceDisplay =
                           hasDistance
-                              ? 'Distance: ${segment.distance} ${segment.unit}'
-                              : 'Tap to add distance';
+                              ? '${segment.distance}'
+                              : (defaultDistance > 0
+                                  ? '$defaultDistance'
+                                  : '?');
+
+                      final unitDisplay = segment.unit ?? 'KM';
+
+                      final distanceText =
+                          'Distance: $distanceDisplay $unitDisplay';
 
                       return Padding(
                         padding: const EdgeInsets.all(4),
@@ -176,7 +181,7 @@ class RaceHomeScreen extends StatelessWidget {
                                               segmentTitle:
                                                   _capitalizeFirstLetter(
                                                     segment.name,
-                                                  ),
+                                                  ), raceId: '',
                                             ),
                                       ),
                                     ).then((_) {

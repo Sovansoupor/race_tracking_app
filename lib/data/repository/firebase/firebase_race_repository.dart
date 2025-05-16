@@ -5,6 +5,9 @@ import 'package:http/http.dart' as http;
 import 'package:race_tracking_app/data/dto/race_dto.dart';
 import 'package:race_tracking_app/data/repository/race_repository.dart';
 import 'package:race_tracking_app/models/race/race.dart';
+import 'package:race_tracking_app/models/segment/segment.dart';
+
+import '../../dto/segment_dto.dart';
 
 class FirebaseRaceRepository extends RaceRepository {
   static const String baseUrl =
@@ -18,7 +21,7 @@ class FirebaseRaceRepository extends RaceRepository {
     required String name,
     required DateTime startTime,
     required List<String> participantIds,
-    required List<String> segments,
+    required List<Segment> segments,
   }) async {
     Uri uri = Uri.parse(allRaceUrl);
 
@@ -27,7 +30,11 @@ class FirebaseRaceRepository extends RaceRepository {
       'name': name,
       'startTime': startTime.toIso8601String(),
       'participant': participantIds,
-      'segments': segments,
+      'segments': segments.map((s) {
+      final json = SegmentDto.toJson(s);
+      json['id'] = s.id;
+      return json;
+    }).toList(),
     };
 
     final http.Response response = await http.post(
@@ -91,10 +98,7 @@ class FirebaseRaceRepository extends RaceRepository {
     final Uri uri = Uri.parse(
       '$baseUrl/$raceCollection/$raceId/segmentDetails/$segmentId.json',
     );
-    final body = {
-      'distance': distance,
-      'unit': unit,
-    };
+    final body = {'distance': distance, 'unit': unit};
     final response = await http.patch(
       uri,
       headers: {'Content-Type': 'application/json'},

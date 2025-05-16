@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 import 'package:race_tracking_app/provider/segment/segment_provider.dart';
 import 'package:race_tracking_app/screens/time%20tracker/widgets/grid_view_mode.dart';
 import 'package:race_tracking_app/screens/time%20tracker/widgets/mass_arrival_view.dart';
@@ -15,6 +16,37 @@ class TimeTrackingScreen extends StatefulWidget {
 }
 
 class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
+  late Timer _timer;
+  Duration _elapsed = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(Duration(seconds: 1), (_) {
+      setState(() {
+        _elapsed += Duration(seconds: 1);
+      });
+    });
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final hours = twoDigits(duration.inHours);
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$hours:$minutes:$seconds";
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final segmentProvider = context.watch<SegmentProvider>();
@@ -28,12 +60,22 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
         toolbarHeight: 95,
         elevation: 0,
         title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(Icons.timer_outlined, color: RaceColors.white, size: 40),
+            Icon(Icons.timer_outlined, color: RaceColors.white, size: 35),
             const SizedBox(width: RaceSpacings.s),
             Text(
               'Timer',
-              style: RaceTextStyles.heading.copyWith(color: RaceColors.white),
+              style: RaceTextStyles.body.copyWith(color: RaceColors.white),
+            ),
+            Spacer(),
+            Text(
+              _formatDuration(_elapsed),
+              style: RaceTextStyles.label.copyWith(
+                color: RaceColors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),

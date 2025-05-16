@@ -90,12 +90,22 @@ class RaceProvider extends ChangeNotifier {
     }
 
     try {
+      // Build List<Segment> from selectedSegments map
+      final segments =
+          selectedSegments.entries.map((entry) {
+            final segment = entry.value;
+            final distanceText = distanceControllers[segment.id]?.text.trim();
+            final distance = int.tryParse(distanceText ?? '') ?? 0;
+
+            return segment.copyWith(distance: distance, unit: segment.unit);
+          }).toList();
+
       final newRace = await _raceRepository.addRace(
         id: '',
         name: nameController.text,
         startTime: startTime!,
         participantIds: [],
-        segments: selectedSegments.keys.toList(),
+        segments: segments,
       );
 
       _races.add(newRace);
@@ -119,12 +129,34 @@ class RaceProvider extends ChangeNotifier {
       throw Exception('Please fill in all fields');
     }
 
+    // Convert selectedSegments into a list of Segment objects with updated distance/unit
+    final segments =
+        selectedSegments.entries.map((entry) {
+          final segment = entry.value;
+          // Try to get user input distance
+          final distanceText = distanceControllers[segment.id]?.text.trim();
+          final distance = int.tryParse(distanceText ?? '');
+
+          // Assign default distances based on ActivityType
+          final defaultDistance = switch (segment.activityType) {
+            ActivityType.swimming => 2,
+            ActivityType.running => 10,
+            ActivityType.cycling => 20,
+            _ => 0,
+          };
+
+          return segment.copyWith(
+            distance: distance ?? defaultDistance,
+            unit: segment.unit ?? 'KM',
+          );
+        }).toList();
+
     await _raceRepository.addRace(
       id: '',
       name: nameController.text,
-      startTime: startTime!,
+      startTime: startTime ?? DateTime.now(),
       participantIds: [],
-      segments: selectedSegments.keys.toList(),
+      segments: segments,
     );
 
     await fetchRaces();
@@ -174,6 +206,7 @@ class RaceProvider extends ChangeNotifier {
 
   // Method to save or update segment distance
   Future<void> saveSegmentDistance({
+    required String raceId,
     required String segmentId,
     required String unit,
   }) async {
