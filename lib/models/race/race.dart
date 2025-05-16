@@ -5,7 +5,7 @@ class Race {
   final String name;
   final DateTime startTime;
   final List<String> participantIds;
-  final List<String> segments;
+  final List<Segment> segments;
   
 
   Race({required this.id, required this.name, required this.participantIds, required this.startTime, required this.segments});

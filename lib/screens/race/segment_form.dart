@@ -9,9 +9,11 @@ import '../../widgets/input/textfield_input.dart';
 class SegmentForm extends StatefulWidget {
   final String segmentTitle;
   final String segmentId;
+  final String raceId;
   const SegmentForm({
     required this.segmentId,
     required this.segmentTitle,
+    required this.raceId,
     super.key,
   });
 
@@ -53,12 +55,13 @@ class _SegmentFormState extends State<SegmentForm> {
 
     final existingSegment = raceProvider.allSegments.firstWhere(
       (s) => s.id == widget.segmentId,
-      orElse: () => Segment(
-        id: widget.segmentId,
-        name: widget.segmentId,
-        order: 0,
-        activityType: ActivityType.running,
-      ),
+      orElse:
+          () => Segment(
+            id: widget.segmentId,
+            name: widget.segmentId,
+            order: 0,
+            activityType: ActivityType.running,
+          ),
     );
 
     final isUpdating = existingSegment.distance != null;
@@ -131,9 +134,11 @@ class _SegmentFormState extends State<SegmentForm> {
                     'On pressed - segmentId: ${widget.segmentId}, selectedUnit: $selectedUnit',
                   );
                   await raceProvider.saveSegmentDistance(
+                    raceId: widget.raceId,
                     segmentId: widget.segmentId,
                     unit: selectedUnit,
                   );
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Distance saved successfully!')),
                   );

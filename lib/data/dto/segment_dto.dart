@@ -1,37 +1,35 @@
+// lib/data/dto/segment_dto.dart
+
 import 'package:race_tracking_app/models/segment/segment.dart';
 
 class SegmentDto {
+  /// Firestore/RealtimeDB JSON → Segment
   static Segment fromJson(String id, Map<String, dynamic> json) {
-    final activityTypeStr = json['activityType'] as String?;
-    final activityType =
-        activityTypeStr != null
-            ? ActivityType.values.firstWhere(
-              (e) => e.toString() == 'ActivityType.$activityTypeStr',
-              orElse: () => ActivityType.running,
-            )
-            : ActivityType.running;
+    // Parse activityType by matching the enum .name
+    final typeName = json['activityType'] as String? ?? '';
+    final activityType = ActivityType.values.firstWhere(
+      (e) => e.name == typeName,
+      orElse: () => ActivityType.running,
+    );
 
-    final name =
-        (json['name'] as String?)?.isNotEmpty == true
-            ? json['name'] as String
-            : id;
     return Segment(
       id: id,
-      name: name,
+      name: json['name'] as String? ?? '',
       order: json['order'] as int? ?? 0,
-      distance: json['distance'] as int? ?? null,
+      distance: json['distance'] as int?,
       unit: json['unit'] as String?,
       activityType: activityType,
     );
   }
 
+  /// Segment → JSON for Firestore/RealtimeDB
   static Map<String, dynamic> toJson(Segment segment) {
     return {
-      'name': segment.name,
-      'order': segment.order,
-      'distance': segment.distance,
-      'activityType': segment.activityType.toString().split('.').last,
-      'unit': segment.unit,
+      'name'        : segment.name,
+      'order'       : segment.order,
+      'distance'    : segment.distance,
+      'unit'        : segment.unit,
+      'activityType': segment.activityType.name,
     };
   }
 }

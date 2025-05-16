@@ -8,6 +8,7 @@ import 'package:race_tracking_app/theme/theme.dart';
 import 'package:race_tracking_app/widgets/action/race_button.dart';
 
 import '../../models/race/race.dart';
+import '../time tracker/time_tracking_screen.dart';
 
 class RaceDetails extends StatelessWidget {
   final Race race;
@@ -288,12 +289,17 @@ class RaceDetails extends StatelessWidget {
             const SizedBox(height: 16),
             Expanded(child: content),
             const SizedBox(height: RaceSpacings.s),
-            RaceButton(text: "Start Race", onPressed: onStartRace ?? () {}),
+            RaceButton(
+              text: "Start Race",
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const TimeTrackingScreen()),
+                );
+              },
+            ),
           ],
         ),
       ),
     );
   }
-
-  void _onEditRacePressed(BuildContext context) {}
 }

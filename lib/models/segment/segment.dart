@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum ActivityType { swimming, cycling, running, flying }
+enum ActivityType { swimming, cycling, running }
 
 extension SegmentTypeExtension on ActivityType {
   String get label {
@@ -11,8 +11,6 @@ extension SegmentTypeExtension on ActivityType {
         return 'Running';
       case ActivityType.cycling:
         return 'Cycling';
-      case ActivityType.flying:
-        return 'Flying';
     }
   }
 
@@ -24,8 +22,7 @@ extension SegmentTypeExtension on ActivityType {
         return Icons.directions_run; // Icon for Running
       case ActivityType.cycling:
         return Icons.directions_bike; // Icon for Cycling
-      case ActivityType.flying:
-        return Icons.airplanemode_active; // Icon for Flying
+      // Icon for Flying
     }
   }
 }
@@ -36,7 +33,7 @@ class Segment {
   final int order;
   final int? distance;
   final ActivityType activityType;
-  final String? unit; 
+  final String? unit;
 
   Segment({
     required this.activityType,
@@ -44,7 +41,7 @@ class Segment {
     required this.name,
     required this.order,
     this.distance,
-    this.unit
+    this.unit,
   });
 
   // Add this copyWith method
