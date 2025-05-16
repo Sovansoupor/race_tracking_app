@@ -1,16 +1,18 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:firebase_database/firebase_database.dart' hide Transaction;
 import 'package:http/http.dart' as http;
 import 'package:race_tracking_app/data/dto/participant_dto.dart';
 import 'package:race_tracking_app/data/repository/participant_repository.dart';
 import 'package:race_tracking_app/models/participant/participant.dart';
 
 class FirebaseParticipantRepository extends ParticipantRepository {
-  static const String baseUrl ='https://flutter2-race-tracking-app-default-rtdb.asia-southeast1.firebasedatabase.app/';
+  static const String baseUrl =
+      'https://flutter2-race-tracking-app-default-rtdb.asia-southeast1.firebasedatabase.app/';
   static const String participantCollection = "Participant";
-  static const String allParticipantUrl ='$baseUrl/$participantCollection.json';
-  static const String bibCounterUrl = 'https://flutter2-race-tracking-app-default-rtdb.asia-southeast1.firebasedatabase.app/bibCounter.json';
+  static const String allParticipantUrl =
+      '$baseUrl/$participantCollection.json';
+  static const String bibCounterUrl =
+      'https://flutter2-race-tracking-app-default-rtdb.asia-southeast1.firebasedatabase.app/bibCounter.json';
 
   Future<int> _getNextBib() async {
     // Get current value
@@ -34,7 +36,7 @@ class FirebaseParticipantRepository extends ParticipantRepository {
 
     return nextBib;
   }
-  
+
   @override
   Future<Participant> addParticipant({
     required String id,
@@ -128,9 +130,15 @@ class FirebaseParticipantRepository extends ParticipantRepository {
     final data = json.decode(getResponse.body) as Map<String, dynamic>?;
 
     /// If the list is empty, reset the bibCounter
-    final bibCounterRef = FirebaseDatabase.instance.ref('bibCounter');
     if (data == null || data.isEmpty) {
-      await bibCounterRef.set(0); // Reset the bibCounter to 0
+      final resetBibResponse = await http.put(
+        Uri.parse(bibCounterUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(0),
+      );
+      if (resetBibResponse.statusCode != HttpStatus.ok) {
+        throw Exception('Failed to reset bibCounter');
+      }
       return [];
     }
 
@@ -175,7 +183,14 @@ class FirebaseParticipantRepository extends ParticipantRepository {
     }
 
     // Update the bibCounter to match the number of remaining participants
-    await bibCounterRef.set(participants.length);
+    final updateBibCounterResponse = await http.put(
+      Uri.parse(bibCounterUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(participants.length),
+    );
+    if (updateBibCounterResponse.statusCode != HttpStatus.ok) {
+      throw Exception('Failed to update bibCounter after deletion');
+    }
 
     // Fetch the updated list of participants
     return participants;

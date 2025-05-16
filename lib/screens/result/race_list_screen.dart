@@ -122,17 +122,17 @@ class _RaceListScreenState extends State<RaceListScreen> {
           child: ListTile(
             title: Text(
               race.name,
-              style: RaceTextStyles.body.copyWith(color: RaceColors.backGroundColor),
+              style: RaceTextStyles.body.copyWith(color: RaceColors.backgroundAccentDark),
             ),
             subtitle: Text(
               'Participants: ${race.participantIds.length}',
               style: RaceTextStyles.label.copyWith(
-                color: RaceColors.backGroundColor,
+                color: RaceColors.backgroundAccentDark,
               ),
             ),
             trailing: Icon(
               Icons.chevron_right,
-              color: RaceColors.white,
+              color: RaceColors.backgroundAccent,
             ),
             onTap: () {
               Navigator.of(context).push(
@@ -150,13 +150,4 @@ class _RaceListScreenState extends State<RaceListScreen> {
       },
     );
   }
-}
-
-// Example usage in your app's navigation
-void navigateToRaceList(BuildContext context) {
-  Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (context) => const RaceListScreen(),
-    ),
-  );
 }

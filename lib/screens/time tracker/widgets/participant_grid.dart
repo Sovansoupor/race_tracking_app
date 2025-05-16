@@ -73,7 +73,7 @@ class ParticipantGrid extends StatelessWidget {
                       ),
                     if (isTracked) const SizedBox(width: 4),
                     Text(
-                      "${index + 001}",
+                      "BIB${index + 001}",
                       style: RaceTextStyles.label.copyWith(
                         color: RaceColors.white,
                       ),

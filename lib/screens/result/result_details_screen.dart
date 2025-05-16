@@ -51,16 +51,20 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
       );
 
       // Step 2: Get all participants
-      final allParticipants = await widget.participantRepository.getParticipant();
-      
+      final allParticipants =
+          await widget.participantRepository.getParticipant();
+
       // Step 3: Filter participants for this race
-      final raceParticipants = allParticipants
-          .where((participant) => _race!.participantIds.contains(participant.id))
-          .toList();
-      
+      final raceParticipants =
+          allParticipants
+              .where(
+                (participant) => _race!.participantIds.contains(participant.id),
+              )
+              .toList();
+
       // Step 4: Calculate times and sort participants
       final List<Map<String, dynamic>> participantsWithTime = [];
-      
+
       for (final participant in raceParticipants) {
         // Calculate total time by summing segment times
         Duration totalTime = Duration.zero;
@@ -70,28 +74,32 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
             totalTime += segmentTime;
           }
         }
-        
+
         participantsWithTime.add({
           'participant': participant,
           'totalTime': totalTime,
         });
       }
-      
+
       // Sort by total time (fastest first)
-      participantsWithTime.sort((a, b) => 
-          (a['totalTime'] as Duration).compareTo(b['totalTime'] as Duration));
-      
+      participantsWithTime.sort(
+        (a, b) =>
+            (a['totalTime'] as Duration).compareTo(b['totalTime'] as Duration),
+      );
+
       // Step 5: Create race results in ranked order
       _results = [];
       for (int i = 0; i < participantsWithTime.length; i++) {
         final entry = participantsWithTime[i];
-        _results.add(RaceResult.fromParticipant(
-          participant: entry['participant'],
-          position: i + 1,
-          totalTime: entry['totalTime'],
-        ));
+        _results.add(
+          RaceResult.fromParticipant(
+            participant: entry['participant'],
+            position: i + 1,
+            totalTime: entry['totalTime'],
+          ),
+        );
       }
-      
+
       setState(() {
         _isLoading = false;
       });
@@ -111,13 +119,13 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
         backgroundColor: RaceColors.backgroundAccentDark,
         toolbarHeight: 95,
         elevation: 0,
-        title: Row(
-          children: [
-            Text(
-              'Result',
-              style: RaceTextStyles.heading.copyWith(color: RaceColors.white),
-            ),
-          ],
+        title: Text(
+          _isLoading ? 'Loading...' : _race?.name ?? 'Race Results',
+          style: RaceTextStyles.body.copyWith(color: RaceColors.white),
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: RaceColors.white),
+          onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: _buildContent(),
@@ -140,7 +148,10 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
             children: [
               Text(
                 'Error loading results',
-                style: RaceTextStyles.label.copyWith(color: RaceColors.white, fontWeight: FontWeight.bold),
+                style: RaceTextStyles.label.copyWith(
+                  color: RaceColors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -151,7 +162,10 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _loadRaceResults,
-                child: const Text('Retry', style: TextStyle(color: Colors.black),),
+                child: const Text(
+                  'Retry',
+                  style: TextStyle(color: Colors.black),
+                ),
               ),
             ],
           ),
@@ -169,10 +183,17 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Race Name
-              Text(
-                _race?.name ?? 'Race Details',
-                style: RaceTextStyles.body.copyWith(color: RaceColors.white),
+              Row(
+                children: [
+                  Icon(Icons.bar_chart, color: RaceColors.white, size: 25),
+                  const SizedBox(width: RaceSpacings.s),
+                  Text(
+                    'Results',
+                    style: RaceTextStyles.body.copyWith(
+                      color: RaceColors.white,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
 
@@ -185,38 +206,39 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
           ),
         ),
         const RaceDivider(),
-        
+
         // Results List
-        _results.isEmpty 
+        _results.isEmpty
             ? Expanded(
-                child: Center(
-                  child: Text(
-                    'No results available for this race',
-                    style: RaceTextStyles.label.copyWith(color: RaceColors.white),
-                  ),
-                ),
-              )
-            : Expanded(
-                child: ListView.separated(
-                  padding: EdgeInsets.zero,
-                  itemCount: _results.length,
-                  separatorBuilder: (context, index) => Divider(
-                    height: 1,
-                    color: RaceColors.white.withOpacity(0.1),
-                    indent: 16,
-                    endIndent: 16,
-                  ),
-                  itemBuilder: (context, index) {
-                    final result = _results[index];
-                    return ResultRow(
-                      rank: result.rank,
-                      name: result.name,
-                      bib: result.bib,
-                      result: result.result,
-                    );
-                  },
+              child: Center(
+                child: Text(
+                  'No results available for this race',
+                  style: RaceTextStyles.label.copyWith(color: RaceColors.white),
                 ),
               ),
+            )
+            : Expanded(
+              child: ListView.separated(
+                padding: EdgeInsets.zero,
+                itemCount: _results.length,
+                separatorBuilder:
+                    (context, index) => Divider(
+                      height: 1,
+                      color: RaceColors.white.withOpacity(0.1),
+                      indent: 16,
+                      endIndent: 16,
+                    ),
+                itemBuilder: (context, index) {
+                  final result = _results[index];
+                  return ResultRow(
+                    rank: result.rank,
+                    name: result.name,
+                    bib: result.bib,
+                    result: result.result,
+                  );
+                },
+              ),
+            ),
       ],
     );
   }
