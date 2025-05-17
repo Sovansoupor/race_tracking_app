@@ -17,7 +17,7 @@ class ParticipantGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final segmentProvider = context.watch<SegmentProvider>();
-    final trackedSegments = segmentProvider.trackedSegments;
+    final participantTimes = segmentProvider.currentSegmentParticipantTimes;
     final participantProvider = context.watch<ParticipantProvider>();
 
     if (participantProvider.isLoading) {
@@ -36,7 +36,7 @@ class ParticipantGrid extends StatelessWidget {
 
     return GridView.builder(
       padding: const EdgeInsets.all(16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
@@ -44,51 +44,41 @@ class ParticipantGrid extends StatelessWidget {
       ),
       itemCount: allParticipants.length,
       itemBuilder: (context, int index) {
-        final isTracked = trackedSegments[index] ?? false;
+        final participantId = index + 1;
+        final recordedTime = participantTimes[participantId];
+
         return GestureDetector(
           onTap: () {
             if (onParticipantTap != null) {
-              onParticipantTap!(index);
-            } else {
-              segmentProvider.toggleSegmentTracking(index);
+              onParticipantTap!(participantId);
             }
           },
           child: Container(
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: isTracked ? RaceColors.primary : RaceColors.neutralDark,
+              color:
+                  recordedTime != null
+                      ? RaceColors.functional
+                      : RaceColors.neutralDark,
               borderRadius: BorderRadius.circular(RaceSpacings.radius),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (isTracked)
-                      Icon(
-                        Icons.check_circle,
-                        color: RaceColors.white,
-                        size: 16,
-                      ),
-                    if (isTracked) const SizedBox(width: 4),
-                    Text(
-                      "BIB${index + 001}",
-                      style: RaceTextStyles.label.copyWith(
-                        color: RaceColors.white,
-                      ),
-                    ),
-                  ],
+                Text(
+                  "BIB $participantId",
+                  style: RaceTextStyles.label.copyWith(color: RaceColors.white),
                 ),
-                if (isTracked && showTrackedLabel) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    "Tracked",
-                    style: RaceTextStyles.label.copyWith(
-                      color: RaceColors.white,
-                    ),
+                const SizedBox(height: 4),
+                Text(
+                  recordedTime != null
+                      ? "${recordedTime.inMinutes}:${(recordedTime.inSeconds % 60).toString().padLeft(2, '0')}"
+                      : "--:--",
+                  style: RaceTextStyles.label.copyWith(
+                    color: RaceColors.white,
+                    fontSize: 12,
                   ),
-                ],
+                ),
               ],
             ),
           ),
