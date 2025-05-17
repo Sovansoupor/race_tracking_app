@@ -9,14 +9,15 @@ class GridViewMode extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final segmentProvider = context.watch<SegmentProvider>();
-    
+
     return Column(
       children: [
         Expanded(
           child: ParticipantGrid(
             showTrackedLabel: false,
             onParticipantTap: (index) {
-              segmentProvider.toggleSegmentTracking(index);
+              final elapsedTime = segmentProvider.raceElapsed;
+              segmentProvider.recordParticipantTime(index, elapsedTime);
             },
           ),
         ),

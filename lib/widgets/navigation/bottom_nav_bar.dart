@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:race_tracking_app/screens/time%20tracker/time_tracking_screen.dart';
 import '../../screens/home/home_screen.dart';
 import '../../screens/result/race_list_screen.dart';
 import 'package:race_tracking_app/theme/theme.dart';
 
 class BottomNavBar extends StatefulWidget {
   final int initialIndex;
+
   const BottomNavBar({super.key, this.initialIndex = 0});
 
   @override
@@ -32,9 +32,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
   @override
   Widget build(BuildContext context) {
     final widgetOptions = [
-      HomeScreen(username: '', competitions: []),
-      const RaceListScreen(),
-      const TimeTrackingScreen(),
+      HomeScreen(username: '', competitions: []), // Home Screen
+      const RaceListScreen(), // Result Screen
     ];
 
     return Scaffold(
@@ -58,7 +57,6 @@ class _BottomNavBarState extends State<BottomNavBar> {
           items: [
             _buildNavItem('assets/icon/home_icon.png', 'Home', 0),
             _buildNavItem('assets/icon/result_icon.png', 'Result', 1),
-            _buildNavItem('assets/icon/time_icon.png', 'Time', 2),
           ],
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
@@ -94,7 +92,6 @@ class _BottomNavBarState extends State<BottomNavBar> {
         height: 28,
         color: RaceColors.primary,
       ),
-
       label: isSelected ? label : '',
     );
   }

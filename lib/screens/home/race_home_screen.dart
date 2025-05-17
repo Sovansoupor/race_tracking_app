@@ -83,11 +83,7 @@ class RaceHomeScreen extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder:
-                                      (context) => RaceDetails(
-                                        race: race,
-                                        participants: [],
-                                      ),
+                                  builder: (context) => RaceDetails(race: race),
                                 ),
                               );
                             },
@@ -181,7 +177,8 @@ class RaceHomeScreen extends StatelessWidget {
                                               segmentTitle:
                                                   _capitalizeFirstLetter(
                                                     segment.name,
-                                                  ), raceId: '',
+                                                  ),
+                                              raceId: '',
                                             ),
                                       ),
                                     ).then((_) {
