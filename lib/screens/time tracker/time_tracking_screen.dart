@@ -9,7 +9,9 @@ import 'package:race_tracking_app/widgets/display/race_divider.dart';
 import 'package:race_tracking_app/models/segment/segment.dart';
 
 class TimeTrackingScreen extends StatefulWidget {
-  const TimeTrackingScreen({super.key});
+  final bool startImmediately;
+  
+  const TimeTrackingScreen({super.key, this.startImmediately = false});
 
   @override
   State<TimeTrackingScreen> createState() => _TimeTrackingScreenState();
@@ -22,7 +24,9 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
   @override
   void initState() {
     super.initState();
-    _startTimer();
+    if (widget.startImmediately) {
+      _startTimer();
+    }
   }
 
   void _startTimer() {
@@ -69,12 +73,15 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
               style: RaceTextStyles.body.copyWith(color: RaceColors.white),
             ),
             Spacer(),
-            Text(
-              _formatDuration(_elapsed),
-              style: RaceTextStyles.label.copyWith(
-                color: RaceColors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+            SizedBox(
+              width: 100,
+              child: Text(
+                _formatDuration(_elapsed),
+                style: RaceTextStyles.label.copyWith(
+                  color: RaceColors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],

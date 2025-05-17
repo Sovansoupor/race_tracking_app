@@ -293,7 +293,10 @@ class RaceDetails extends StatelessWidget {
               text: "Start Race",
               onPressed: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const TimeTrackingScreen()),
+                  MaterialPageRoute(
+                    builder:
+                        (_) => const TimeTrackingScreen(startImmediately: true),
+                  ),
                 );
               },
             ),
