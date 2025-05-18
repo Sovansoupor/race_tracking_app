@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:race_tracking_app/models/participant/participant.dart';
 import 'package:race_tracking_app/provider/participant%20provider/participant_provider.dart';
+import 'package:race_tracking_app/provider/segment/segment_provider.dart';
 import 'package:race_tracking_app/screens/participant/participant_form.dart';
+import 'package:race_tracking_app/screens/time%20tracker/time_tracking_screen.dart';
 import 'package:race_tracking_app/theme/theme.dart';
 import 'package:race_tracking_app/widgets/action/race_button.dart';
+import 'package:race_tracking_app/widgets/navigation/bottom_nav_bar.dart';
 
 import '../../models/race/race.dart';
-import '../time tracker/time_tracking_screen.dart';
 
 class RaceDetails extends StatefulWidget {
   final Race race;
@@ -175,6 +177,7 @@ class _RaceDetailsState extends State<RaceDetails> {
   Widget build(BuildContext context) {
     final participantProvider = context.watch<ParticipantProvider>();
     // final selectedSegment = context.watch<SegmentProvider>();
+    final segmentProvider = context.watch<SegmentProvider>();
 
     Widget content = const Center(child: Text(''));
 
@@ -320,11 +323,32 @@ class _RaceDetailsState extends State<RaceDetails> {
             Expanded(child: content),
             const SizedBox(height: RaceSpacings.s),
             RaceButton(
-              text: "Start Race",
+              text: segmentProvider.isRaceStarted ? "End Race" : "Start Race",
               onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const TimeTrackingScreen()),
-                );
+                if (segmentProvider.isRaceStarted) {
+                  // End Race
+                  segmentProvider.endRace(); // Stop the race state
+                  segmentProvider.stopRaceTimer(); // Stop the timer
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder:
+                          (_) => const BottomNavBar(
+                            initialIndex: 1, // Navigate to the Result Screen
+                          ),
+                    ),
+                    (route) => false, // Remove all previous routes
+                  );
+                } else {
+                  // Start Race
+                  segmentProvider.startRace(); // Start the race state
+                  segmentProvider.startRaceTimer(); // Start the timer
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder:
+                          (_) => TimeTrackingScreen(startImmediately: true),
+                    ),
+                  );
+                }
               },
             ),
           ],
