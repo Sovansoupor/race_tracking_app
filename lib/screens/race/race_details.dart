@@ -13,15 +13,122 @@ import '../../models/race/race.dart';
 
 class RaceDetails extends StatelessWidget {
   final Race race;
+  final void Function(Participant)? onEditParticipant;
 
-  const RaceDetails({super.key, required this.race});
-
+  const RaceDetails({super.key, this.onEditParticipant, required this.race});
   void _onAddParticipantPressed(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => const ParticipantForm(mode: formMode.add),
       ),
     );
+  }
+
+  void _onEditParticipantPressed(
+    BuildContext context,
+    Participant participant,
+  ) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder:
+            (context) =>
+                ParticipantForm(mode: formMode.edit, participant: participant),
+      ),
+    );
+  }
+
+  void _onDeleteParticipantPressed(
+    BuildContext context,
+    Participant participant,
+  ) async {
+    final participantProvider = context.read<ParticipantProvider>();
+
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: RaceColors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(RaceSpacings.radius),
+            ),
+            title: Column(
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: RaceColors.red,
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "Delete Participant",
+                  style: RaceTextStyles.body.copyWith(
+                    color: RaceColors.backgroundAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+            content: Text(
+              "Are you sure you want to delete ${participant.firstName} ${participant.lastName}?",
+              style: RaceTextStyles.label.copyWith(
+                color: RaceColors.backgroundAccent,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: RaceColors.greyLight,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(RaceSpacings.radius),
+                  ),
+                ),
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(
+                  "Cancel",
+                  style: RaceTextStyles.button.copyWith(
+                    color: RaceColors.backgroundAccent,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: RaceColors.red,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(RaceSpacings.radius),
+                  ),
+                ),
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(
+                  "Delete",
+                  style: RaceTextStyles.button.copyWith(
+                    color: RaceColors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+    );
+
+    if (shouldDelete == true) {
+      try {
+        await participantProvider.removeParticipant(id: participant.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "${participant.firstName} ${participant.lastName} deleted successfully",
+            ),
+          ),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to delete participant: $e")),
+        );
+      }
+    }
   }
 
   @override
@@ -78,6 +185,28 @@ class RaceDetails extends StatelessWidget {
                       ),
                     ],
                   ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          Icons.edit,
+                          color: RaceColors.backgroundAccent,
+                        ),
+                        onPressed:
+                            () =>
+                                _onEditParticipantPressed(context, participant),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.delete, color: RaceColors.red),
+                        onPressed:
+                            () => _onDeleteParticipantPressed(
+                              context,
+                              participant,
+                            ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -88,15 +217,41 @@ class RaceDetails extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: RaceColors.backgroundAccent,
-      appBar: AppBar(
-        backgroundColor: RaceColors.neutralLight,
-        title: Text(
-          race.name,
-          style: RaceTextStyles.body.copyWith(color: RaceColors.neutralDark),
-        ),
-        leading: IconButton(
-          icon: Icon(Icons.chevron_left, color: RaceColors.neutralDark),
-          onPressed: () => Navigator.of(context).pop(),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(100.0),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 20),
+          child: Container(
+            margin: EdgeInsets.symmetric(horizontal: 16.0),
+            height: 70,
+            decoration: BoxDecoration(
+              color: RaceColors.neutralLight,
+              borderRadius: BorderRadius.circular(RaceSpacings.radius),
+            ),
+            child: SafeArea(
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.chevron_left,
+                      color: RaceColors.neutralDark,
+                      size: 35,
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  Expanded(
+                    child: Text(
+                      race.name,
+                      style: RaceTextStyles.body.copyWith(
+                        color: RaceColors.neutralDark,
+                      ),
+                      textAlign: TextAlign.start, // Center the title
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
       body: Padding(
