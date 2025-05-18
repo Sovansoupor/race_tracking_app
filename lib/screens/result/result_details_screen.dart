@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:race_tracking_app/data/repository/participant_repository.dart';
 import 'package:race_tracking_app/data/repository/race_repository.dart';
 import 'package:race_tracking_app/models/race/race.dart';
+import 'package:race_tracking_app/provider/segment/segment_provider.dart';
 import 'package:race_tracking_app/screens/result/race_result.dart';
 import 'package:race_tracking_app/screens/result/widget/result_row.dart';
 import 'package:race_tracking_app/screens/result/widget/result_table_header.dart';
@@ -29,6 +31,8 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
   String _errorMessage = '';
   Race? _race;
   List<RaceResult> _results = [];
+  bool _raceCompleted = false;
+  bool _allSegmentsCompleted = false;
 
   @override
   void initState() {
@@ -51,53 +55,49 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
       );
 
       // Step 2: Get all participants
-      final allParticipants =
-          await widget.participantRepository.getParticipant();
+      final allParticipants = await widget.participantRepository.getParticipant();
 
       // Step 3: Filter participants for this race using raceId
-      final raceParticipants =
-          allParticipants
-              .where(
-                (participant) => participant.raceId == widget.raceId,
-              )
-              .toList();
+      final raceParticipants = allParticipants
+          .where((participant) => participant.raceId == widget.raceId)
+          .toList();
 
-      // Step 4: Calculate times and sort participants
-      final List<Map<String, dynamic>> participantsWithTime = [];
-
-      for (final participant in raceParticipants) {
-        // Calculate total time by summing segment times
-        Duration totalTime = Duration.zero;
-        for (final segment in _race!.segments) {
-          final segmentTime = participant.segmentTimes[segment.id];
-          if (segmentTime != null) {
-            totalTime += segmentTime;
-          }
+      // Get the segment provider to check race status
+      final segmentProvider = Provider.of<SegmentProvider>(context, listen: false);
+      _raceCompleted = !segmentProvider.isRaceStarted && segmentProvider.raceElapsed > Duration.zero;
+      
+      // Check if all segments are completed
+      _allSegmentsCompleted = true;
+      for (int i = 0; i < _race!.segments.length; i++) {
+        if (!segmentProvider.isSegmentCompleted(i)) {
+          _allSegmentsCompleted = false;
+          break;
         }
-
-        participantsWithTime.add({
-          'participant': participant,
-          'totalTime': totalTime,
-        });
       }
 
-      // Sort by total time (fastest first)
-      participantsWithTime.sort(
-        (a, b) =>
-            (a['totalTime'] as Duration).compareTo(b['totalTime'] as Duration),
-      );
-
-      // Step 5: Create race results in ranked order
-      _results = [];
-      for (int i = 0; i < participantsWithTime.length; i++) {
-        final entry = participantsWithTime[i];
-        _results.add(
-          RaceResult.fromParticipant(
-            participant: entry['participant'],
-            position: i + 1,
-            totalTime: entry['totalTime'],
-          ),
-        );
+      // Only process results if race is completed or all segments are done
+      if (_raceCompleted || _allSegmentsCompleted) {
+        // Step 4: Get ranked results from segment provider
+        final rankedResults = segmentProvider.getRankedResults();
+        
+        // Step 5: Create race results in ranked order
+        _results = [];
+        for (int i = 0; i < rankedResults.length; i++) {
+          final entry = rankedResults[i];
+          // Find the participant with this bib number
+          final participant = raceParticipants.firstWhere(
+            (p) => p.bibNumber == entry.key,
+            orElse: () => throw Exception('Participant not found for BIB ${entry.key}'),
+          );
+          
+          _results.add(
+            RaceResult.fromParticipant(
+              participant: participant,
+              position: i + 1,
+              totalTime: entry.value,
+            ),
+          );
+        }
       }
 
       setState(() {
@@ -173,6 +173,51 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
       );
     }
 
+    // If race is not completed and not all segments are completed
+    if (!_raceCompleted && !_allSegmentsCompleted) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.timer_outlined,
+                color: RaceColors.white,
+                size: 64,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Race in progress',
+                style: RaceTextStyles.body.copyWith(
+                  color: RaceColors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Results will be available when the race is completed or all segments are finished.',
+                style: RaceTextStyles.label.copyWith(color: RaceColors.white),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _loadRaceResults,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: RaceColors.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: Text(
+                  'Refresh',
+                  style: RaceTextStyles.button.copyWith(color: RaceColors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -183,6 +228,37 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Race status indicator
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: _raceCompleted ? RaceColors.functional : RaceColors.primary,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _raceCompleted ? Icons.check_circle : Icons.timer,
+                          color: RaceColors.white,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _raceCompleted ? 'Race Completed' : 'All Segments Completed',
+                          style: RaceTextStyles.label.copyWith(
+                            color: RaceColors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               // Table header
               const Padding(
                 padding: EdgeInsets.only(right: 16),
@@ -196,35 +272,34 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
         // Results List
         _results.isEmpty
             ? Expanded(
-              child: Center(
-                child: Text(
-                  'No results available for this race',
-                  style: RaceTextStyles.label.copyWith(color: RaceColors.white),
+                child: Center(
+                  child: Text(
+                    'No results available for this race',
+                    style: RaceTextStyles.label.copyWith(color: RaceColors.white),
+                  ),
+                ),
+              )
+            : Expanded(
+                child: ListView.separated(
+                  padding: EdgeInsets.zero,
+                  itemCount: _results.length,
+                  separatorBuilder: (context, index) => Divider(
+                    height: 1,
+                    color: RaceColors.white.withOpacity(0.1),
+                    indent: 16,
+                    endIndent: 16,
+                  ),
+                  itemBuilder: (context, index) {
+                    final result = _results[index];
+                    return ResultRow(
+                      rank: result.rank,
+                      name: result.name,
+                      bib: result.bib,
+                      result: result.result,
+                    );
+                  },
                 ),
               ),
-            )
-            : Expanded(
-              child: ListView.separated(
-                padding: EdgeInsets.zero,
-                itemCount: _results.length,
-                separatorBuilder:
-                    (context, index) => Divider(
-                      height: 1,
-                      color: RaceColors.white.withOpacity(0.1),
-                      indent: 16,
-                      endIndent: 16,
-                    ),
-                itemBuilder: (context, index) {
-                  final result = _results[index];
-                  return ResultRow(
-                    rank: result.rank,
-                    name: result.name,
-                    bib: result.bib,
-                    result: result.result,
-                  );
-                },
-              ),
-            ),
       ],
     );
   }

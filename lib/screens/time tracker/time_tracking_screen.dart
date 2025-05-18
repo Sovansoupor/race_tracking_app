@@ -6,16 +6,21 @@ import 'package:race_tracking_app/screens/time%20tracker/widgets/grid_view_mode.
 import 'package:race_tracking_app/theme/theme.dart';
 import 'package:race_tracking_app/widgets/display/race_divider.dart';
 import 'package:race_tracking_app/models/segment/segment.dart';
+import 'package:race_tracking_app/data/repository/firebase/firebase_participant_repository.dart';
+import 'package:race_tracking_app/data/repository/firebase/firebase_race_repository.dart';
+import 'package:race_tracking_app/screens/result/result_details_screen.dart';
 
 class TimeTrackingScreen extends StatefulWidget {
   final bool startImmediately;
   final bool stopTimer;
+  final String? raceId;
   final VoidCallback? onEndRace;
 
   const TimeTrackingScreen({
     super.key,
     this.startImmediately = false,
     this.stopTimer = false,
+    this.raceId,
     this.onEndRace,
   });
 
@@ -26,6 +31,7 @@ class TimeTrackingScreen extends StatefulWidget {
 class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
   late Timer _timer;
   Duration _elapsed = Duration.zero;
+  bool _isTimerRunning = false;
 
   @override
   void initState() {
@@ -44,11 +50,21 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
         _elapsed += Duration(seconds: 1);
       });
     });
+    _isTimerRunning = true;
   }
 
   void _stopTimer() {
     if (_timer.isActive) {
       _timer.cancel();
+      _isTimerRunning = false;
+    }
+  }
+
+  void _toggleTimer() {
+    if (_isTimerRunning) {
+      _stopTimer();
+    } else {
+      _startTimer();
     }
   }
 
@@ -60,9 +76,35 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
     return "$hours:$minutes:$seconds";
   }
 
+  void _endRace() {
+    final segmentProvider = Provider.of<SegmentProvider>(context, listen: false);
+    segmentProvider.endRace();
+    segmentProvider.stopRaceTimer();
+    
+    if (widget.raceId != null) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => ResultDetailsScreen(
+            raceId: widget.raceId!,
+            raceRepository: FirebaseRaceRepository(),
+            participantRepository: FirebaseParticipantRepository(),
+          ),
+        ),
+      );
+    } else {
+      Navigator.of(context).pop();
+    }
+    
+    if (widget.onEndRace != null) {
+      widget.onEndRace!();
+    }
+  }
+
   @override
   void dispose() {
-    _timer.cancel();
+    if (_isTimerRunning) {
+      _timer.cancel();
+    }
     super.dispose();
   }
 
@@ -70,6 +112,7 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
   Widget build(BuildContext context) {
     final segmentProvider = context.watch<SegmentProvider>();
     final currentActivityType = segmentProvider.activityType;
+    final allSegmentsCompleted = segmentProvider.areAllSegmentsCompleted(ActivityType.values.length);
 
     return Scaffold(
       backgroundColor: RaceColors.backgroundAccent,
@@ -81,7 +124,7 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
           icon: Icon(
             Icons.arrow_back,
             color: RaceColors.white,
-          ), // White back button
+          ),
           onPressed: () {
             Navigator.of(context).pop(); // Navigate back
           },
@@ -97,6 +140,26 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
             ),
           ],
         ),
+        actions: [
+          if (allSegmentsCompleted)
+            Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: ElevatedButton.icon(
+                onPressed: _endRace,
+                icon: Icon(Icons.flag, color: RaceColors.white),
+                label: Text(
+                  'End Race',
+                  style: RaceTextStyles.label.copyWith(color: RaceColors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: RaceColors.functional,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,55 +178,83 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
             child: Wrap(
               spacing: 12.0,
               runSpacing: 12.0,
-              children:
-                  ActivityType.values.map((type) {
-                    final isSelected = currentActivityType == type;
-                    return GestureDetector(
-                      onTap: () {
-                        if (!isSelected) {
-                          segmentProvider.selectSegment(type);
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
+              children: ActivityType.values.map((type) {
+                final isSelected = currentActivityType == type;
+                final isCompleted = segmentProvider.isSegmentCompleted(
+                  ActivityType.values.indexOf(type),
+                );
+                
+                return GestureDetector(
+                  onTap: () {
+                    if (!isSelected) {
+                      segmentProvider.selectSegment(type);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? RaceColors.functional
+                          : (isCompleted ? RaceColors.primary : RaceColors.neutralDark),
+                      borderRadius: BorderRadius.circular(
+                        RaceSpacings.radius,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isCompleted ? Icons.check_circle : type.icon,
+                          color: RaceColors.white,
+                          size: 20,
                         ),
-                        decoration: BoxDecoration(
-                          color:
-                              isSelected
-                                  ? RaceColors.functional
-                                  : RaceColors.neutralDark,
-                          borderRadius: BorderRadius.circular(
-                            RaceSpacings.radius,
+                        const SizedBox(width: 8),
+                        Text(
+                          type.label,
+                          style: RaceTextStyles.label.copyWith(
+                            color: RaceColors.white,
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(type.icon, color: RaceColors.white, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                              type.label,
-                              style: RaceTextStyles.label.copyWith(
-                                color: RaceColors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
           ),
           const SizedBox(height: RaceSpacings.m),
-          Center(
-            child: Text(
-              _formatDuration(_elapsed),
-              style: RaceTextStyles.heading.copyWith(
-                color: RaceColors.white,
-                fontSize: 48, // Larger font size for the timer
-                fontWeight: FontWeight.bold,
+          GestureDetector(
+            onTap: _toggleTimer,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _isTimerRunning ? RaceColors.functional : RaceColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _formatDuration(_elapsed),
+                      style: RaceTextStyles.heading.copyWith(
+                        color: RaceColors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    // Text(
+                    //   _isTimerRunning ? "RUNNING" : "PAUSED",
+                    //   style: RaceTextStyles.label.copyWith(
+                    //     color: RaceColors.white,
+                    //     fontSize: 12,
+                    //   ),
+                    // ),
+                  ],
+                ),
               ),
             ),
           ),

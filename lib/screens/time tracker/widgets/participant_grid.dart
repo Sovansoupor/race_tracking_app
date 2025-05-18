@@ -14,6 +14,13 @@ class ParticipantGrid extends StatelessWidget {
     this.onParticipantTap,
   });
 
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes);
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$minutes:$seconds";
+  }
+
   @override
   Widget build(BuildContext context) {
     final segmentProvider = context.watch<SegmentProvider>();
@@ -34,6 +41,12 @@ class ParticipantGrid extends StatelessWidget {
       );
     }
 
+    // Register participants with the segment provider if not already done
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final bibNumbers = allParticipants.map((p) => p.bibNumber).toList();
+      segmentProvider.addParticipantsToTrack(bibNumbers);
+    });
+
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -44,41 +57,59 @@ class ParticipantGrid extends StatelessWidget {
       ),
       itemCount: allParticipants.length,
       itemBuilder: (context, int index) {
-        final participantId = index + 1;
-        final recordedTime = participantTimes[participantId];
+        final participant = allParticipants[index];
+        final bibNumber = participant.bibNumber;
+        final recordedTime = participantTimes[bibNumber];
+        final hasRecordedTime = recordedTime != null;
 
         return GestureDetector(
           onTap: () {
-            if (onParticipantTap != null) {
-              onParticipantTap!(participantId);
+            if (onParticipantTap != null && !hasRecordedTime) {
+              onParticipantTap!(bibNumber);
             }
           },
           child: Container(
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color:
-                  recordedTime != null
-                      ? RaceColors.functional
-                      : RaceColors.neutralDark,
+              color: hasRecordedTime ? RaceColors.functional : RaceColors.neutralDark,
               borderRadius: BorderRadius.circular(RaceSpacings.radius),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "BIB $participantId",
-                  style: RaceTextStyles.label.copyWith(color: RaceColors.white),
+                  "BIB $bibNumber",
+                  style: RaceTextStyles.label.copyWith(
+                    color: RaceColors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  recordedTime != null
-                      ? "${recordedTime.inMinutes}:${(recordedTime.inSeconds % 60).toString().padLeft(2, '0')}"
-                      : "--:--",
+                  hasRecordedTime ? _formatDuration(recordedTime) : "--:--",
                   style: RaceTextStyles.label.copyWith(
                     color: RaceColors.white,
                     fontSize: 12,
                   ),
                 ),
+                if (showTrackedLabel)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      hasRecordedTime ? "Tracked" : "Tap to Track",
+                      style: RaceTextStyles.label.copyWith(
+                        color: RaceColors.white.withOpacity(0.8),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
