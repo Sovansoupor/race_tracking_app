@@ -4,10 +4,12 @@ import 'package:race_tracking_app/models/participant/participant.dart';
 import 'package:race_tracking_app/provider/participant%20provider/participant_provider.dart';
 import 'package:race_tracking_app/provider/segment/segment_provider.dart';
 import 'package:race_tracking_app/screens/participant/participant_form.dart';
+import 'package:race_tracking_app/screens/result/result_details_screen.dart';
 import 'package:race_tracking_app/screens/time%20tracker/time_tracking_screen.dart';
 import 'package:race_tracking_app/theme/theme.dart';
 import 'package:race_tracking_app/widgets/action/race_button.dart';
-import 'package:race_tracking_app/widgets/navigation/bottom_nav_bar.dart';
+import 'package:race_tracking_app/data/repository/firebase/firebase_participant_repository.dart';
+import 'package:race_tracking_app/data/repository/firebase/firebase_race_repository.dart';
 
 import '../../models/race/race.dart';
 
@@ -45,37 +47,43 @@ class _RaceDetailsState extends State<RaceDetails> {
   }
 
   void _onAddParticipantPressed(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => ParticipantForm(
-          mode: formMode.add,
-          raceId: widget.race.id, // Pass the race ID
-        ),
-      ),
-    ).then((_) {
-      // Refresh participants when returning from add screen
-      final participantProvider = context.read<ParticipantProvider>();
-      participantProvider.fetchParticipantsByRace(widget.race.id);
-    });
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder:
+                (context) => ParticipantForm(
+                  mode: formMode.add,
+                  raceId: widget.race.id, // Pass the race ID
+                ),
+          ),
+        )
+        .then((_) {
+          // Refresh participants when returning from add screen
+          final participantProvider = context.read<ParticipantProvider>();
+          participantProvider.fetchParticipantsByRace(widget.race.id);
+        });
   }
 
   void _onEditParticipantPressed(
     BuildContext context,
     Participant participant,
   ) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => ParticipantForm(
-          mode: formMode.edit, 
-          participant: participant,
-          raceId: widget.race.id, // Pass the race ID
-        ),
-      ),
-    ).then((_) {
-      // Refresh participants when returning from edit screen
-      final participantProvider = context.read<ParticipantProvider>();
-      participantProvider.fetchParticipantsByRace(widget.race.id);
-    });
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder:
+                (context) => ParticipantForm(
+                  mode: formMode.edit,
+                  participant: participant,
+                  raceId: widget.race.id, // Pass the race ID
+                ),
+          ),
+        )
+        .then((_) {
+          // Refresh participants when returning from edit screen
+          final participantProvider = context.read<ParticipantProvider>();
+          participantProvider.fetchParticipantsByRace(widget.race.id);
+        });
   }
 
   void _onDeleteParticipantPressed(
@@ -86,71 +94,72 @@ class _RaceDetailsState extends State<RaceDetails> {
 
     final shouldDelete = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: RaceColors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(RaceSpacings.radius),
-        ),
-        title: Column(
-          children: [
-            Icon(
-              Icons.warning_amber_rounded,
-              color: RaceColors.red,
-              size: 48,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: RaceColors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(RaceSpacings.radius),
             ),
-            const SizedBox(height: 16),
-            Text(
-              "Delete Participant",
-              style: RaceTextStyles.body.copyWith(
+            title: Column(
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: RaceColors.red,
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "Delete Participant",
+                  style: RaceTextStyles.body.copyWith(
+                    color: RaceColors.backgroundAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+            content: Text(
+              "Are you sure you want to delete ${participant.firstName} ${participant.lastName}?",
+              style: RaceTextStyles.label.copyWith(
                 color: RaceColors.backgroundAccent,
-                fontWeight: FontWeight.bold,
+                fontSize: 16,
               ),
               textAlign: TextAlign.center,
             ),
-          ],
-        ),
-        content: Text(
-          "Are you sure you want to delete ${participant.firstName} ${participant.lastName}?",
-          style: RaceTextStyles.label.copyWith(
-            color: RaceColors.backgroundAccent,
-            fontSize: 16,
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: RaceColors.greyLight,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(RaceSpacings.radius),
+                  ),
+                ),
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(
+                  "Cancel",
+                  style: RaceTextStyles.button.copyWith(
+                    color: RaceColors.backgroundAccent,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: RaceColors.red,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(RaceSpacings.radius),
+                  ),
+                ),
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(
+                  "Delete",
+                  style: RaceTextStyles.button.copyWith(
+                    color: RaceColors.white,
+                  ),
+                ),
+              ),
+            ],
           ),
-          textAlign: TextAlign.center,
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: RaceColors.greyLight,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(RaceSpacings.radius),
-              ),
-            ),
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(
-              "Cancel",
-              style: RaceTextStyles.button.copyWith(
-                color: RaceColors.backgroundAccent,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: RaceColors.red,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(RaceSpacings.radius),
-              ),
-            ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(
-              "Delete",
-              style: RaceTextStyles.button.copyWith(
-                color: RaceColors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
 
     if (shouldDelete == true) {
@@ -173,10 +182,22 @@ class _RaceDetailsState extends State<RaceDetails> {
     }
   }
 
+  void _viewRaceResults() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder:
+            (context) => ResultDetailsScreen(
+              raceId: widget.race.id,
+              raceRepository: FirebaseRaceRepository(),
+              participantRepository: FirebaseParticipantRepository(),
+            ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final participantProvider = context.watch<ParticipantProvider>();
-    // final selectedSegment = context.watch<SegmentProvider>();
     final segmentProvider = context.watch<SegmentProvider>();
 
     Widget content = const Center(child: Text(''));
@@ -185,7 +206,7 @@ class _RaceDetailsState extends State<RaceDetails> {
       content = const Center(child: CircularProgressIndicator());
     } else if (participantProvider.hasData) {
       final participants = participantProvider.participantState!.data!;
-    
+
       if (participants.isEmpty) {
         content = Center(
           child: Text(
@@ -194,6 +215,12 @@ class _RaceDetailsState extends State<RaceDetails> {
           ),
         );
       } else {
+        // Register participants with the segment provider for tracking
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final bibNumbers = participants.map((p) => p.bibNumber).toList();
+          segmentProvider.addParticipantsToTrack(bibNumbers);
+        });
+
         content = ListView.builder(
           itemCount: participants.length,
           itemBuilder: (context, index) {
@@ -236,14 +263,17 @@ class _RaceDetailsState extends State<RaceDetails> {
                           Icons.edit,
                           color: RaceColors.backgroundAccent,
                         ),
-                        onPressed: () => _onEditParticipantPressed(context, participant),
+                        onPressed:
+                            () =>
+                                _onEditParticipantPressed(context, participant),
                       ),
                       IconButton(
                         icon: Icon(Icons.delete, color: RaceColors.red),
-                        onPressed: () => _onDeleteParticipantPressed(
-                          context,
-                          participant,
-                        ),
+                        onPressed:
+                            () => _onDeleteParticipantPressed(
+                              context,
+                              participant,
+                            ),
                       ),
                     ],
                   ),
@@ -254,6 +284,13 @@ class _RaceDetailsState extends State<RaceDetails> {
         );
       }
     }
+
+    // Check if race is completed or all segments are completed
+    final bool raceCompleted = segmentProvider.isRaceCompleted;
+    final bool allSegmentsCompleted = segmentProvider.areAllSegmentsCompleted(
+      widget.race.segments.length,
+    );
+    final bool showResultsButton = raceCompleted || allSegmentsCompleted;
 
     return Scaffold(
       backgroundColor: RaceColors.backgroundAccent,
@@ -322,34 +359,55 @@ class _RaceDetailsState extends State<RaceDetails> {
             const SizedBox(height: 16),
             Expanded(child: content),
             const SizedBox(height: RaceSpacings.s),
+
+            // Show results button if race is completed or all segments are done
+            if (showResultsButton)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: RaceButton(
+                  text: "View Results",
+                  icon: Icons.bar_chart,
+                  onPressed: _viewRaceResults,
+                  color: RaceColors.primary,
+                ),
+              ),
+
             RaceButton(
               text: segmentProvider.isRaceStarted ? "End Race" : "Start Race",
-              onPressed: () {
-                if (segmentProvider.isRaceStarted) {
-                  // End Race
-                  segmentProvider.endRace(); // Stop the race state
-                  segmentProvider.stopRaceTimer(); // Stop the timer
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                      builder:
-                          (_) => const BottomNavBar(
-                            initialIndex: 1, // Navigate to the Result Screen
-                          ),
-                    ),
-                    (route) => false, // Remove all previous routes
-                  );
-                } else {
-                  // Start Race
-                  segmentProvider.startRace(); // Start the race state
-                  segmentProvider.startRaceTimer(); // Start the timer
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder:
-                          (_) => TimeTrackingScreen(startImmediately: true),
-                    ),
-                  );
-                }
-              },
+              icon:
+                  segmentProvider.isRaceStarted ? Icons.flag : Icons.play_arrow,
+              onPressed:
+                  segmentProvider.isRaceCompleted
+                      ? null
+                      : () {
+                        if (segmentProvider.isRaceStarted) {
+                          segmentProvider.endRace();
+                          segmentProvider.stopRaceTimer();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => ResultDetailsScreen(
+                                    raceId: widget.race.id,
+                                    raceRepository: FirebaseRaceRepository(),
+                                    participantRepository:
+                                        FirebaseParticipantRepository(),
+                                  ),
+                            ),
+                          );
+                        } else {
+                          segmentProvider.startRace();
+                          segmentProvider.startRaceTimer();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder:
+                                  (_) => TimeTrackingScreen(
+                                    startImmediately: true,
+                                  ),
+                            ),
+                          );
+                        }
+                      },
+              color: segmentProvider.isRaceStarted ? Colors.red : Colors.green,
             ),
           ],
         ),

@@ -22,7 +22,7 @@ class SegmentProvider extends ChangeNotifier {
   int _currentSegmentIndex = 0;
 
   // Flag to indicate if the entire race is completed
-  final bool _isRaceCompleted = false;
+  bool _isRaceCompleted = false;
 
   // Map to track elapsed time for each participant (by index)
   final Map<int, Duration> _participantTimers = {};
@@ -58,7 +58,7 @@ class SegmentProvider extends ChangeNotifier {
     super.dispose();
   }
 
-  // Select segment manually (e.g., by UI tap)
+  // Select segment manually
   void selectSegment(ActivityType segment) {
     if (_activityType != segment) {
       _activityType = segment;
@@ -88,7 +88,7 @@ class SegmentProvider extends ChangeNotifier {
 
     // Mark the current segment as completed if all participants are tracked
     if (_segmentParticipantTimes[_activityType]!.length ==
-        _participantTimers.length) {
+        _participantTimers.length && _participantTimers.isNotEmpty) {
       _trackedSegments[_currentSegmentIndex] = true;
     }
 
@@ -98,6 +98,7 @@ class SegmentProvider extends ChangeNotifier {
   // Reset tracking for the current segment
   void resetCurrentSegmentTracking() {
     _segmentParticipantTimes[_activityType] = {};
+    _trackedSegments[_currentSegmentIndex] = false;
     notifyListeners();
   }
 
@@ -114,24 +115,39 @@ class SegmentProvider extends ChangeNotifier {
   // Stop the global race timer
   void stopRaceTimer() {
     _raceTimer?.cancel();
+    _isRaceCompleted = true; // Mark race as completed when timer stops
     notifyListeners();
   }
 
   // Start the race
   void startRace() {
     _isRaceStarted = true;
+    _isRaceCompleted = false;
     notifyListeners();
   }
 
   // End the race
   void endRace() {
     _isRaceStarted = false;
+    _isRaceCompleted = true;
     notifyListeners();
   }
 
   // Check if a segment is completed
   bool isSegmentCompleted(int segmentIndex) {
     return _trackedSegments[segmentIndex] ?? false;
+  }
+
+  // Check if all segments are completed
+  bool areAllSegmentsCompleted(int totalSegments) {
+    if (_trackedSegments.isEmpty) return false;
+    
+    for (int i = 0; i < totalSegments; i++) {
+      if (!(_trackedSegments[i] ?? false)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   // Calculate total time for each participant across all segments
@@ -158,5 +174,40 @@ class SegmentProvider extends ChangeNotifier {
         totalTimes.entries.toList()..sort((a, b) => a.value.compareTo(b.value));
 
     return sortedResults;
+  }
+  
+  // Add a participant to be tracked
+  void addParticipantToTrack(int bibNumber) {
+    if (!_participantTimers.containsKey(bibNumber)) {
+      _participantTimers[bibNumber] = Duration.zero;
+      notifyListeners();
+    }
+  }
+  
+  // Add multiple participants to be tracked
+  void addParticipantsToTrack(List<int> bibNumbers) {
+    bool changed = false;
+    for (final bib in bibNumbers) {
+      if (!_participantTimers.containsKey(bib)) {
+        _participantTimers[bib] = Duration.zero;
+        changed = true;
+      }
+    }
+    if (changed) {
+      notifyListeners();
+    }
+  }
+  
+  // Clear all participant data (for testing)
+  void clearAllData() {
+    _trackedSegments.clear();
+    _participantTimings.clear();
+    _participantTimers.clear();
+    _segmentParticipantTimes.clear();
+    _isRaceCompleted = false;
+    _isRaceStarted = false;
+    _raceElapsed = Duration.zero;
+    _raceTimer?.cancel();
+    notifyListeners();
   }
 }

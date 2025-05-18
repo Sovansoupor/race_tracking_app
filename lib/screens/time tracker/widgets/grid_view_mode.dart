@@ -14,10 +14,11 @@ class GridViewMode extends StatelessWidget {
       children: [
         Expanded(
           child: ParticipantGrid(
-            showTrackedLabel: false,
-            onParticipantTap: (index) {
+            showTrackedLabel: true,
+            onParticipantTap: (bibNumber) {
+              // Record the current elapsed time for this participant
               final elapsedTime = segmentProvider.raceElapsed;
-              segmentProvider.recordParticipantTime(index, elapsedTime);
+              segmentProvider.recordParticipantTime(bibNumber, elapsedTime);
             },
           ),
         ),
