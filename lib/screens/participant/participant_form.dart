@@ -11,7 +11,14 @@ enum formMode { add, edit }
 class ParticipantForm extends StatefulWidget {
   final formMode mode;
   final Participant? participant;
-  const ParticipantForm({super.key, required this.mode, this.participant});
+  final String? raceId; 
+  
+  const ParticipantForm({
+    super.key, 
+    required this.mode, 
+    this.participant,
+    this.raceId, 
+  });
 
   @override
   State<ParticipantForm> createState() => _ParticipantFormState();
@@ -23,7 +30,6 @@ class _ParticipantFormState extends State<ParticipantForm> {
   @override
   void initState() {
     super.initState();
-    // _participantProvider = ParticipantProvider();
     _participantProvider = context.read<ParticipantProvider>();
     if (widget.mode == formMode.edit && widget.participant != null) {
       _participantProvider.firstNameController.text =
@@ -57,7 +63,11 @@ class _ParticipantFormState extends State<ParticipantForm> {
            backgroundColor: Colors.transparent,
           elevation: 0,
         ),
-        body: _buildForm(mode: widget.mode, participant: widget.participant),
+        body: _buildForm(
+          mode: widget.mode, 
+          participant: widget.participant,
+          raceId: widget.raceId, // Pass raceId to the form
+        ),
       ),
     );
   }
@@ -66,7 +76,13 @@ class _ParticipantFormState extends State<ParticipantForm> {
 class _buildForm extends StatelessWidget {
   final formMode mode;
   final Participant? participant;
-  const _buildForm({required this.mode, this.participant});
+  final String? raceId; 
+  
+  const _buildForm({
+    required this.mode, 
+    this.participant,
+    this.raceId, 
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -98,13 +114,14 @@ class _buildForm extends StatelessWidget {
             label: "Gender",
             controller: participantProvider.genderController,
             hint: "Type here..",
-          ),
+            ),
           const Spacer(),
           RaceButton(
             onPressed: () async {
               try {
                 if (mode == formMode.add) {
-                  await participantProvider.addParticipant();
+                  // Pass raceId when adding a participant
+                  await participantProvider.addParticipant(raceId: raceId ?? '');
                 } else if (mode == formMode.edit && participant != null) {
                   await participantProvider.editParticipant(
                     id: participant!.id,
@@ -112,6 +129,7 @@ class _buildForm extends StatelessWidget {
                     lastName: participantProvider.lastNameController.text,
                     age: int.parse(participantProvider.ageController.text),
                     gender: participantProvider.genderController.text,
+                    raceId: raceId ?? participant!.raceId, // Preserve or update raceId
                   );
                 }
                 Navigator.of(context).pop();

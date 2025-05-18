@@ -54,7 +54,42 @@ class ParticipantProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addParticipant() async {
+  // New method to fetch participants for a specific race
+  void fetchParticipantsByRace(String raceId) async {
+    try {
+      // 1- loading state
+      participantState = AsyncValue.loading();
+      notifyListeners();
+
+      // 2 - Fetch all participants
+      final allParticipants = await _repository.getParticipant();
+      
+      // Log for debugging
+      print("Fetched ${allParticipants.length} total participants");
+      print("Filtering for race ID: $raceId");
+      
+      // Debug: Print all participants and their raceIds
+      for (final p in allParticipants) {
+        print("Participant ${p.firstName} ${p.lastName} (ID: ${p.id}) has raceId: '${p.raceId}'");
+      }
+      
+      // Filter participants by race ID
+      final raceParticipants = allParticipants.where((p) => p.raceId == raceId).toList();
+      
+      print("Found ${raceParticipants.length} participants for race $raceId");
+      
+      // Update state with filtered participants
+      participantState = AsyncValue.success(raceParticipants);
+
+    } catch (error) {
+      print("ERROR fetching participants by race: $error");
+      participantState = AsyncValue.error(error);
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> addParticipant({String raceId = ''}) async {
     if (firstNameController.text.trim().isEmpty ||
         lastNameController.text.trim().isEmpty ||
         ageController.text.trim().isEmpty ||
@@ -65,6 +100,10 @@ class ParticipantProvider extends ChangeNotifier {
     if (age == null) {
       throw Exception("Please enter a valid age");
     }
+    
+    print("Adding participant with raceId: '$raceId'");
+    
+    // Pass raceId to the repository
     await _repository.addParticipant(
       firstName: firstNameController.text,
       lastName: lastNameController.text,
@@ -73,17 +112,23 @@ class ParticipantProvider extends ChangeNotifier {
       bibNumber: 0,
       gender: genderController.text,
       segmentTimes: {},
+      raceId: raceId,
     );
 
-    print("Participant added to Firebase");
+    print("Participant added to Firebase with raceId: '$raceId'");
     firstNameController.clear();
     lastNameController.clear();
     ageController.clear();
     genderController.clear();
     notifyListeners();
 
-    // 2- Call repo to fetch
-    fetchParticipants();
+    // If we're adding to a specific race, fetch only that race's participants
+    if (raceId.isNotEmpty) {
+      fetchParticipantsByRace(raceId);
+    } else {
+      // Otherwise fetch all participants
+      fetchParticipants();
+    }
   }
 
   Future<void> removeParticipant({required String id}) async {
@@ -101,7 +146,9 @@ class ParticipantProvider extends ChangeNotifier {
     required String lastName,
     required int age,
     required String gender,
+    String raceId = '',
   }) async {
+    // First update the basic participant info
     await _repository.editParticipant(
       id: id,
       firstName: firstName,
@@ -109,10 +156,23 @@ class ParticipantProvider extends ChangeNotifier {
       age: age,
       gender: gender,
     );
+    
+    // If a raceId is provided, assign the participant to that race
+    if (raceId.isNotEmpty) {
+      print("Assigning participant $id to race $raceId");
+      await _repository.assignParticipantToRace(id, raceId);
+    }
+    
     firstNameController.clear();
     lastNameController.clear();
     ageController.clear();
     genderController.clear();
-    fetchParticipants();
+    
+    // If we're editing a participant for a specific race, refresh that race's participants
+    if (raceId.isNotEmpty) {
+      fetchParticipantsByRace(raceId);
+    } else {
+      fetchParticipants();
+    }
   }
 }

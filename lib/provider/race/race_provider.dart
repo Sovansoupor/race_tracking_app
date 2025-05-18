@@ -4,6 +4,7 @@ import 'package:race_tracking_app/data/repository/firebase/firebase_race_reposit
 import '../../models/race/race.dart';
 import '../../models/segment/segment.dart';
 
+
 class SegmentInput {
   final TextEditingController nameController;
   final TextEditingController distanceController;
@@ -98,7 +99,6 @@ class RaceProvider extends ChangeNotifier {
         id: '',
         name: nameController.text,
         startTime: startTime!,
-        participantIds: [],
         segments: segments,
       );
 

@@ -12,14 +12,7 @@ class RaceDto {
             ? (DateTime.tryParse(startTimeStr) ?? DateTime.now())
             : DateTime.now();
 
-    // 2) Parse participant IDs
-    final participantIds =
-        (json['participantIds'] as List<dynamic>?)
-            ?.map((e) => e as String)
-            .toList() ??
-        [];
-
-    // 3) Parse segments (either Map or String)
+    // 2) Parse segments (either Map or String)
     final rawSegments = (json['segments'] as List<dynamic>?) ?? [];
     final segments =
         rawSegments.map<Segment>((entry) {
@@ -50,7 +43,6 @@ class RaceDto {
       id: id,
       name: json['name'] as String? ?? 'Unknown',
       startTime: startTime,
-      participantIds: participantIds,
       segments: segments,
     );
   }
@@ -60,7 +52,6 @@ class RaceDto {
     return {
       'name': race.name,
       'startTime': race.startTime.toIso8601String(),
-      'participantIds': race.participantIds,
       'segments':
           race.segments.map((seg) {
             final m = SegmentDto.toJson(seg);

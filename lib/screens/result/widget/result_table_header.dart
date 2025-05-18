@@ -22,7 +22,7 @@ class ResultTableHeader extends StatelessWidget {
         ),
         Expanded(
           flex: 5,
-          child: Text('Name', style: headerStyle),
+          child: Text('Participant', style: headerStyle),
         ),
         Expanded(
           flex: 2,

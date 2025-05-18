@@ -15,6 +15,7 @@ class ParticipantDto {
       id: id,
       age: json['age'] as int? ?? 0,
       bibNumber: json['bibNumber'] as int? ?? 0,
+      raceId: json['raceId'] as String? ?? '',
     );
   }
 
@@ -24,6 +25,8 @@ class ParticipantDto {
       'lastName': participant.lastName,
       'age': participant.age,
       'bibNumber': participant.bibNumber,
+      'gender': participant.gender,
+      'raceId': participant.raceId,
       'segmentTimes': participant.segmentTimes.map(
         (key, value) => MapEntry(key, value.inMilliseconds),
       ),

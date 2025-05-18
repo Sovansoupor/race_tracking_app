@@ -22,7 +22,6 @@ extension SegmentTypeExtension on ActivityType {
         return Icons.directions_run; // Icon for Running
       case ActivityType.cycling:
         return Icons.directions_bike; // Icon for Cycling
-      // Icon for Flying
     }
   }
 }

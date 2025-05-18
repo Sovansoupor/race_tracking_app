@@ -80,22 +80,26 @@ class RaceHomeScreen extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => RaceDetails(race: race),
+                                  builder: (context) => RaceDetails(race: race, participants: [],),
                                 ),
                               );
                             },
                             icon: const Icon(Icons.chevron_right, size: 30),
+
                           ),
                         ],
                       ),
                       const SizedBox(height: 6),
+                      const SizedBox(height: 6),
                       Text(
                         "Participants:  ",
+
                         style: RaceTextStyles.label.copyWith(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      const SizedBox(height: 4),
                       const SizedBox(height: 4),
                     ],
                   ),
@@ -103,9 +107,13 @@ class RaceHomeScreen extends StatelessWidget {
 
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+
                   children: [
                     ...race.segments.map((segment) {
                       final distanceText =
+                          segment.distance.trim().isEmpty
+                              ? 'No distance'
+                              : segment.distance;
                           segment.distance.trim().isEmpty
                               ? 'No distance'
                               : segment.distance;
@@ -128,6 +136,12 @@ class RaceHomeScreen extends StatelessWidget {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
+                                Text(
+                                  _capitalizeFirstLetter(segment.name),
+                                  style: RaceTextStyles.label.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 Text(
                                   _capitalizeFirstLetter(segment.name),
                                   style: RaceTextStyles.label.copyWith(
