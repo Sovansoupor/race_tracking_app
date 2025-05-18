@@ -4,7 +4,6 @@ import 'package:race_tracking_app/data/repository/firebase/firebase_race_reposit
 import '../../models/race/race.dart';
 import '../../models/segment/segment.dart';
 
-
 class SegmentInput {
   final TextEditingController nameController;
   final TextEditingController distanceController;
@@ -34,9 +33,37 @@ class RaceProvider extends ChangeNotifier {
   bool _isLoading = false;
   String _errorMessage = '';
 
+  // Track race states individually
+  final Map<String, bool> _raceStarted = {};
+  final Map<String, bool> _raceCompleted = {};
+
   List<Race> get races => _races;
   bool get isLoading => _isLoading;
   String get errorMessage => _errorMessage;
+
+  // Check if a race is started
+  bool isRaceStarted(String raceId) {
+    return _raceStarted[raceId] ?? false;
+  }
+
+  // Check if a race is completed
+  bool isRaceCompleted(String raceId) {
+    return _raceCompleted[raceId] ?? false;
+  }
+
+  // Start a race
+  void startRace(String raceId) {
+    _raceStarted[raceId] = true;
+    _raceCompleted[raceId] = false;
+    notifyListeners();
+  }
+
+  // End a race
+  void endRace(String raceId) {
+    _raceStarted[raceId] = false;
+    _raceCompleted[raceId] = true;
+    notifyListeners();
+  }
 
   void updateStartTime(DateTime date) {
     startTime = date;
@@ -86,25 +113,13 @@ class RaceProvider extends ChangeNotifier {
         }).toList();
 
     try {
-      print('Submitting race: ${nameController.text}');
-      print('Start time: $startTime');
-      print('Segments:');
-      for (var segment in segments) {
-        print(
-          'Segment: ${segment.name}, Distance: ${segment.distance}, Activity: ${segment.activityType}',
-        );
-      }
-
       await _raceRepository.addRace(
         id: '',
         name: nameController.text,
         startTime: startTime!,
         segments: segments,
       );
-
-      print('Race successfully saved to the database.');
     } catch (e) {
-      print('Error saving race: $e');
       throw Exception('Failed to save race');
     }
 
@@ -117,9 +132,10 @@ class RaceProvider extends ChangeNotifier {
     try {
       await _raceRepository.removeRace(id: id);
       _races.removeWhere((race) => race.id == id);
+      _raceStarted.remove(id);
+      _raceCompleted.remove(id);
       notifyListeners();
     } catch (e) {
-      print('Error deleting race: $e');
       throw Exception('Failed to delete race');
     }
   }
@@ -128,7 +144,9 @@ class RaceProvider extends ChangeNotifier {
     nameController.clear();
     startTimeController.clear();
     startTime = null;
-    segmentInputs.forEach((input) => input.dispose());
+    for (var input in segmentInputs) {
+      input.dispose();
+    }
     segmentInputs.clear();
   }
 
