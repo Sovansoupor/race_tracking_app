@@ -6,7 +6,6 @@ abstract class RaceRepository {
     required String id,
     required String name,
     required DateTime startTime,
-    required List<String> participantIds,
     required List<Segment> segments,
   });
   Future<List<Race>> removeRace({required String id});

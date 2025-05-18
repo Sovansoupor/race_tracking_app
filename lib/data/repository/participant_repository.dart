@@ -9,6 +9,7 @@ abstract class ParticipantRepository {
     required String gender,
     required Map<String, Duration> segmentTimes,
     required int bibNumber,
+    String raceId = '',
   });
   Future<List<Participant>> removeParticipant({required String id});
   Future<Participant> editParticipant({

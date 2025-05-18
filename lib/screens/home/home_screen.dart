@@ -17,40 +17,41 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 30),
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: RaceColors.backgroundAccent,
         appBar: AppBar(
+          toolbarHeight: 70,
           title: Text(
-            'Hello, Rivita',
+            'Race Tracker',
             style: RaceTextStyles.subheadline.copyWith(color: Colors.white),
           ),
-          centerTitle: false,
-          backgroundColor: RaceColors.backgroundAccent,
+          // centerTitle: false,
+          backgroundColor: RaceColors.backgroundAccentDark,
         ),
         body: RaceHomeScreen(),
 
         // floating button
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: RaceColors.primary,
-          shape: CircleBorder(),
-          onPressed: () {
-            // After the RaceForm is completed, fetch races again
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (context) => RaceForm())).then((
-              _,
-            ) {
-              // Fetch races after returning from RaceForm
-              // for it to automatically rebuild the UI when new race to display
-              Provider.of<RaceProvider>(context, listen: false).fetchRaces();
-            });
-          },
-          child: const Icon(Icons.add, size: 30, color: Colors.white),
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: FloatingActionButton(
+            backgroundColor: RaceColors.primary,
+            shape: CircleBorder(),
+            onPressed: () {
+              // After the RaceForm is completed, fetch races again
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (context) => RaceForm())).then((
+                _,
+              ) {
+                // Fetch races after returning from RaceForm
+                // for it to automatically rebuild the UI when new race to display
+                Provider.of<RaceProvider>(context, listen: false).fetchRaces();
+              });
+            },
+            child: const Icon(Icons.add, size: 30, color: Colors.white),
+          ),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      ),
     );
   }
 }

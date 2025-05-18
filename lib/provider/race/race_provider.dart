@@ -104,7 +104,7 @@ class RaceProvider extends ChangeNotifier {
         id: '',
         name: nameController.text,
         startTime: startTime!,
-        participantIds: [],
+        // participantIds: [],
         segments: segments,
       );
 
@@ -155,7 +155,7 @@ class RaceProvider extends ChangeNotifier {
       id: '',
       name: nameController.text,
       startTime: startTime ?? DateTime.now(),
-      participantIds: [],
+      // participantIds: [],
       segments: segments,
     );
 
