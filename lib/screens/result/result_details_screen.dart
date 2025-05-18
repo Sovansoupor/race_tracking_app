@@ -55,17 +55,24 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
       );
 
       // Step 2: Get all participants
-      final allParticipants = await widget.participantRepository.getParticipant();
+      final allParticipants =
+          await widget.participantRepository.getParticipant();
 
       // Step 3: Filter participants for this race using raceId
-      final raceParticipants = allParticipants
-          .where((participant) => participant.raceId == widget.raceId)
-          .toList();
+      final raceParticipants =
+          allParticipants
+              .where((participant) => participant.raceId == widget.raceId)
+              .toList();
 
       // Get the segment provider to check race status
-      final segmentProvider = Provider.of<SegmentProvider>(context, listen: false);
-      _raceCompleted = !segmentProvider.isRaceStarted && segmentProvider.raceElapsed > Duration.zero;
-      
+      final segmentProvider = Provider.of<SegmentProvider>(
+        context,
+        listen: false,
+      );
+      _raceCompleted =
+          !segmentProvider.isRaceStarted &&
+          segmentProvider.raceElapsed > Duration.zero;
+
       // Check if all segments are completed
       _allSegmentsCompleted = true;
       for (int i = 0; i < _race!.segments.length; i++) {
@@ -79,7 +86,7 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
       if (_raceCompleted || _allSegmentsCompleted) {
         // Step 4: Get ranked results from segment provider
         final rankedResults = segmentProvider.getRankedResults();
-        
+
         // Step 5: Create race results in ranked order
         _results = [];
         for (int i = 0; i < rankedResults.length; i++) {
@@ -87,9 +94,13 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
           // Find the participant with this bib number
           final participant = raceParticipants.firstWhere(
             (p) => p.bibNumber == entry.key,
-            orElse: () => throw Exception('Participant not found for BIB ${entry.key}'),
+            orElse:
+                () =>
+                    throw Exception(
+                      'Participant not found for BIB ${entry.key}',
+                    ),
           );
-          
+
           _results.add(
             RaceResult.fromParticipant(
               participant: participant,
@@ -173,51 +184,6 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
       );
     }
 
-    // If race is not completed and not all segments are completed
-    if (!_raceCompleted && !_allSegmentsCompleted) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.timer_outlined,
-                color: RaceColors.white,
-                size: 64,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Race in progress',
-                style: RaceTextStyles.body.copyWith(
-                  color: RaceColors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Results will be available when the race is completed or all segments are finished.',
-                style: RaceTextStyles.label.copyWith(color: RaceColors.white),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _loadRaceResults,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: RaceColors.primary,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
-                child: Text(
-                  'Refresh',
-                  style: RaceTextStyles.button.copyWith(color: RaceColors.white),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -232,9 +198,12 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: _raceCompleted ? RaceColors.functional : RaceColors.primary,
+                      color: _raceCompleted ? RaceColors.green : RaceColors.red,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
@@ -247,10 +216,11 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          _raceCompleted ? 'Race Completed' : 'All Segments Completed',
+                          _raceCompleted
+                              ? 'Race Completed'
+                              : 'All Segments Completed',
                           style: RaceTextStyles.label.copyWith(
                             color: RaceColors.white,
-                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
@@ -272,34 +242,35 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
         // Results List
         _results.isEmpty
             ? Expanded(
-                child: Center(
-                  child: Text(
-                    'No results available for this race',
-                    style: RaceTextStyles.label.copyWith(color: RaceColors.white),
-                  ),
-                ),
-              )
-            : Expanded(
-                child: ListView.separated(
-                  padding: EdgeInsets.zero,
-                  itemCount: _results.length,
-                  separatorBuilder: (context, index) => Divider(
-                    height: 1,
-                    color: RaceColors.white.withOpacity(0.1),
-                    indent: 16,
-                    endIndent: 16,
-                  ),
-                  itemBuilder: (context, index) {
-                    final result = _results[index];
-                    return ResultRow(
-                      rank: result.rank,
-                      name: result.name,
-                      bib: result.bib,
-                      result: result.result,
-                    );
-                  },
+              child: Center(
+                child: Text(
+                  'No results available for this race',
+                  style: RaceTextStyles.label.copyWith(color: RaceColors.white),
                 ),
               ),
+            )
+            : Expanded(
+              child: ListView.separated(
+                padding: EdgeInsets.zero,
+                itemCount: _results.length,
+                separatorBuilder:
+                    (context, index) => Divider(
+                      height: 1,
+                      color: RaceColors.white.withOpacity(0.1),
+                      indent: 16,
+                      endIndent: 16,
+                    ),
+                itemBuilder: (context, index) {
+                  final result = _results[index];
+                  return ResultRow(
+                    rank: result.rank,
+                    name: result.name,
+                    bib: result.bib,
+                    result: result.result,
+                  );
+                },
+              ),
+            ),
       ],
     );
   }

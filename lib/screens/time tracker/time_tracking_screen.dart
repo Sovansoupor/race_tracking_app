@@ -60,14 +60,6 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
     }
   }
 
-  void _toggleTimer() {
-    if (_isTimerRunning) {
-      _stopTimer();
-    } else {
-      _startTimer();
-    }
-  }
-
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final hours = twoDigits(duration.inHours);
@@ -126,7 +118,7 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
             color: RaceColors.white,
           ),
           onPressed: () {
-            Navigator.of(context).pop(); // Navigate back
+            Navigator.of(context).pop();
           },
         ),
         title: Row(
@@ -226,15 +218,8 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
             ),
           ),
           const SizedBox(height: RaceSpacings.m),
-          GestureDetector(
-            onTap: _toggleTimer,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: _isTimerRunning ? RaceColors.functional : RaceColors.primary,
-                  shape: BoxShape.circle,
-                ),
+            Center(
+
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -246,22 +231,13 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    // Text(
-                    //   _isTimerRunning ? "RUNNING" : "PAUSED",
-                    //   style: RaceTextStyles.label.copyWith(
-                    //     color: RaceColors.white,
-                    //     fontSize: 12,
-                    //   ),
-                    // ),
                   ],
                 ),
               ),
-            ),
-          ),
           const SizedBox(height: RaceSpacings.m),
           const RaceDivider(),
           Expanded(
-            child: const GridViewMode(), // Only GridViewMode is used
+            child: const GridViewMode(), 
           ),
         ],
       ),
