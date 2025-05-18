@@ -7,7 +7,6 @@ import 'package:race_tracking_app/data/repository/firebase/firebase_participant_
 import '../../provider/race/race_provider.dart';
 import '../../theme/theme.dart';
 import '../race/race_details.dart';
-import '../race/segment_form.dart';
 
 class RaceHomeScreen extends StatelessWidget {
   const RaceHomeScreen({super.key});
@@ -94,139 +93,83 @@ class RaceHomeScreen extends StatelessWidget {
                                   fontWeight: FontWeight.w200,
                                 ),
                               ),
-                              Spacer(),
+                              const Spacer(),
                               IconButton(
                                 onPressed: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder:
-                                          (context) => RaceDetails(
-                                            race: race,
-                                            participants: participants,
-                                          ),
+                                      builder: (context) => RaceDetails(
+                                        race: race,
+                                        participants: participants,
+                                      ),
                                     ),
                                   );
                                 },
-                                icon: Icon(Icons.chevron_right, size: 30),
+                                icon: const Icon(Icons.chevron_right, size: 30),
                               ),
                             ],
                           ),
                           Row(
                             children: [
-                              Icon(Icons.calendar_month, color: Colors.black, size: 15,),
-                              SizedBox(width: 10,),
+                              Icon(Icons.calendar_month, color: Colors.black, size: 15),
+                              const SizedBox(width: 10),
                               Text(
                                 DateFormat('dd MMM, yyyy').format(race.startTime),
-                                style: RaceTextStyles.label.copyWith(
-                                ),
+                                style: RaceTextStyles.label.copyWith(),
                               ),
                             ],
                           ),
-                          SizedBox(height: 8),
-
+                          const SizedBox(height: 8),
                           Row(
                             children: [
-                              Icon(Icons.people_alt_outlined, color: Colors.black, size: 15,),
-                              SizedBox(width: 10,),
+                              Icon(Icons.people_alt_outlined, color: Colors.black, size: 15),
+                              const SizedBox(width: 10),
                               Text(
                                 '${participants.length} participants',
-                                style: RaceTextStyles.label.copyWith(
-                                ),
+                                style: RaceTextStyles.label.copyWith(),
                               ),
                             ],
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                         ],
                       ),
                     ),
-
                     subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         ...race.segments.map((segment) {
-                          final hasDistance =
-                              segment.distance != null && segment.unit != null;
-
-                          // Provide default distances by activity type if distance is null
-                          final defaultDistance = switch (segment.activityType) {
-                            ActivityType.swimming => 2,
-                            ActivityType.running => 10,
-                            ActivityType.cycling => 20,
-                            _ => 0,
-                          };
-
-                          final distanceDisplay =
-                              hasDistance
-                                  ? '${segment.distance}'
-                                  : (defaultDistance > 0
-                                      ? '$defaultDistance'
-                                      : '?');
-
-                          final unitDisplay = segment.unit ?? 'KM';
-
                           final distanceText =
-                              'Distance: $distanceDisplay $unitDisplay';
+                              segment.distance.trim().isEmpty
+                                  ? 'No distance'
+                                  : segment.distance;
 
                           return Padding(
-                            padding: const EdgeInsets.all(4),
+                            padding: const EdgeInsets.symmetric(vertical: 4),
                             child: Container(
                               decoration: BoxDecoration(
                                 color: RaceColors.white,
-                                borderRadius: BorderRadius.circular(
-                                  RaceSpacings.radius,
-                                ),
+                                borderRadius: BorderRadius.circular(RaceSpacings.radius),
                                 border: Border.all(
                                   color: RaceColors.neutralDark,
                                   width: 0.25,
                                 ),
                               ),
                               child: Padding(
-                                padding: const EdgeInsets.all(RaceSpacings.xs),
+                                padding: const EdgeInsets.all(RaceSpacings.s),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 8.0),
-                                      child: Text(
-                                        _capitalizeFirstLetter(segment.name),
-                                        style: RaceTextStyles.label.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                    Text(
+                                      _capitalizeFirstLetter(segment.name),
+                                      style: RaceTextStyles.label.copyWith(
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     Text(
-                                      distanceText,
+                                      "Distance: $distanceText",
                                       style: RaceTextStyles.label.copyWith(
-                                        color:
-                                            hasDistance
-                                                ? Colors.black
-                                                : RaceColors.disabled,
-                                      ),
-                                    ),
-                                    IconButton(
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (context) => SegmentForm(
-                                                  segmentId: segment.id,
-                                                  segmentTitle:
-                                                      _capitalizeFirstLetter(
-                                                        segment.name,
-                                                      ), 
-                                                  raceId: race.id,
-                                                ),
-                                          ),
-                                        ).then((_) {
-                                          // After returning, refresh segments
-                                          raceProvider.fetchSegments();
-                                        });
-                                        raceProvider.toggleSegment(segment);
-                                      },
-                                      icon: Icon(
-                                        hasDistance ? Icons.edit : Icons.add,
-                                        size: 20,
+                                        color: RaceColors.neutralDark,
                                       ),
                                     ),
                                   ],
@@ -242,15 +185,11 @@ class RaceHomeScreen extends StatelessWidget {
                             OutlinedButton(
                               style: OutlinedButton.styleFrom(
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    RaceSpacings.radius,
-                                  ),
+                                  borderRadius: BorderRadius.circular(RaceSpacings.radius),
                                 ),
                               ),
                               onPressed: () {
-                                raceProvider.deleteRace(
-                                  race.id,
-                                );
+                                raceProvider.deleteRace(race.id);
                               },
                               child: Text(
                                 'Delete Race',
@@ -267,7 +206,7 @@ class RaceHomeScreen extends StatelessWidget {
                 );
               },
             );
-          }
+          },
         );
       },
     );

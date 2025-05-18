@@ -23,6 +23,7 @@ class RaceDto {
           } else {
             // Fallback: it was just a String name
             final segName = entry.toString();
+            final segDistance = entry.toString();
             final type = ActivityType.values.firstWhere(
               (t) => t.name == segName,
               orElse: () => ActivityType.swimming,
@@ -31,8 +32,8 @@ class RaceDto {
               id: segName,
               name: type.label,
               order: 0,
-              distance: null,
-              unit: null,
+              distance: segDistance,
+              // unit: null,
               activityType: type,
             );
           }
