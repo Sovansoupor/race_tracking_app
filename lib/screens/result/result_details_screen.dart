@@ -54,11 +54,11 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
       final allParticipants =
           await widget.participantRepository.getParticipant();
 
-      // Step 3: Filter participants for this race
+      // Step 3: Filter participants for this race using raceId
       final raceParticipants =
           allParticipants
               .where(
-                (participant) => _race!.participantIds.contains(participant.id),
+                (participant) => participant.raceId == widget.raceId,
               )
               .toList();
 
@@ -68,8 +68,8 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
       for (final participant in raceParticipants) {
         // Calculate total time by summing segment times
         Duration totalTime = Duration.zero;
-        for (final segmentId in _race!.segments) {
-          final segmentTime = participant.segmentTimes[segmentId];
+        for (final segment in _race!.segments) {
+          final segmentTime = participant.segmentTimes[segment.id];
           if (segmentTime != null) {
             totalTime += segmentTime;
           }
@@ -117,7 +117,7 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
       backgroundColor: RaceColors.backgroundAccent,
       appBar: AppBar(
         backgroundColor: RaceColors.backgroundAccentDark,
-        toolbarHeight: 95,
+        toolbarHeight: 70,
         elevation: 0,
         title: Text(
           _isLoading ? 'Loading...' : _race?.name ?? 'Race Results',
@@ -183,20 +183,6 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.bar_chart, color: RaceColors.white, size: 25),
-                  const SizedBox(width: RaceSpacings.s),
-                  Text(
-                    'Results',
-                    style: RaceTextStyles.body.copyWith(
-                      color: RaceColors.white,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
               // Table header
               const Padding(
                 padding: EdgeInsets.only(right: 16),

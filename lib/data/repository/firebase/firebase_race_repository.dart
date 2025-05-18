@@ -1,55 +1,51 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:http/http.dart' as http;
 import 'package:race_tracking_app/data/dto/race_dto.dart';
 import 'package:race_tracking_app/data/repository/race_repository.dart';
 import 'package:race_tracking_app/models/race/race.dart';
 import 'package:race_tracking_app/models/segment/segment.dart';
-
 import '../../dto/segment_dto.dart';
 
 class FirebaseRaceRepository extends RaceRepository {
-  static const String baseUrl =
+  static const String _baseUrl =
       'https://flutter2-race-tracking-app-default-rtdb.asia-southeast1.firebasedatabase.app/';
-  static const String raceCollection = "Race";
-  static const String allRaceUrl = '$baseUrl/$raceCollection.json';
+  static const String _raceCollection = "Race";
 
   @override
   Future<Race> addRace({
     required String id,
     required String name,
     required DateTime startTime,
-    required List<String> participantIds,
     required List<Segment> segments,
   }) async {
-    Uri uri = Uri.parse(allRaceUrl);
-
-    //Create a new data
-    final newRaceData = {
+    final Uri url = Uri.parse('$_baseUrl/$_raceCollection.json');
+    
+    final raceData = {
       'name': name,
       'startTime': startTime.toIso8601String(),
-      'participant': participantIds,
       'segments': segments.map((s) {
-      final json = SegmentDto.toJson(s);
-      json['id'] = s.id;
-      return json;
-    }).toList(),
+        final json = SegmentDto.toJson(s);
+        json['id'] = s.id;
+        return json;
+      }).toList(),
     };
 
-    final http.Response response = await http.post(
-      uri,
+    final response = await http.post(
+      url,
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(newRaceData),
+      body: json.encode(raceData),
     );
+    
     if (response.statusCode != HttpStatus.ok) {
       throw Exception('Failed to add race');
     }
+    
     final newRaceId = json.decode(response.body)['name'];
+    
     return Race(
       id: newRaceId,
       name: name,
-      participantIds: participantIds,
       startTime: startTime,
       segments: segments,
     );
@@ -57,16 +53,13 @@ class FirebaseRaceRepository extends RaceRepository {
 
   @override
   Future<List<Race>> getRace() async {
-    Uri uri = Uri.parse(allRaceUrl);
-    final http.Response response = await http.get(uri);
+    final Uri url = Uri.parse('$_baseUrl/$_raceCollection.json');
+    final response = await http.get(url);
 
-    // Handle errors
-    if (response.statusCode != HttpStatus.ok &&
-        response.statusCode != HttpStatus.created) {
+    if (response.statusCode != HttpStatus.ok) {
       throw Exception('Failed to load races');
     }
 
-    // Return all races
     final data = json.decode(response.body) as Map<String, dynamic>?;
     if (data == null) return [];
 
@@ -77,35 +70,44 @@ class FirebaseRaceRepository extends RaceRepository {
 
   @override
   Future<List<Race>> removeRace({required String id}) async {
-    Uri uri = Uri.parse('$baseUrl/$raceCollection/$id.json');
-    final http.Response response = await http.delete(uri);
+    final Uri url = Uri.parse('$_baseUrl/$_raceCollection/$id.json');
+    final response = await http.delete(url);
 
-    if (response.statusCode != HttpStatus.ok &&
+    if (response.statusCode != HttpStatus.ok && 
         response.statusCode != HttpStatus.noContent) {
       throw Exception('Failed to delete race');
     }
 
-    // After deletion, return the updated race list
     return await getRace();
   }
-
-  Future<void> updateRaceSegmentDetail({
-    required String raceId,
-    required String segmentId,
-    required int distance,
-    required String unit,
-  }) async {
-    final Uri uri = Uri.parse(
-      '$baseUrl/$raceCollection/$raceId/segmentDetails/$segmentId.json',
-    );
-    final body = {'distance': distance, 'unit': unit};
+  
+  Future<void> addParticipantToRace(String raceId, String participantId) async {
+    final Uri url = Uri.parse('$_baseUrl/Participant/$participantId.json');
+    
+    // Update the participant with the race ID
+    final updateData = {'raceId': raceId};
     final response = await http.patch(
-      uri,
+      url,
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(body),
+      body: json.encode(updateData),
     );
+    
     if (response.statusCode != HttpStatus.ok) {
-      throw Exception('Failed to update per‑race segment detail');
+      throw Exception('Failed to associate participant with race');
     }
+  }
+  
+  Future<List<String>> getParticipantsByRace(String raceId) async {
+    final Uri url = Uri.parse('$_baseUrl/Participant.json?orderBy="raceId"&equalTo="$raceId"');
+    
+    final response = await http.get(url);
+    if (response.statusCode != HttpStatus.ok) {
+      throw Exception('Failed to get race participants');
+    }
+    
+    final data = json.decode(response.body) as Map<String, dynamic>?;
+    if (data == null) return [];
+    
+    return data.keys.toList();
   }
 }

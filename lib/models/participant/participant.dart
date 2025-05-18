@@ -5,6 +5,7 @@ class Participant {
   final String id;
   final int age;
   final int bibNumber;
+  final String raceId;
   final Map<String, Duration> segmentTimes;
 
   Participant(
@@ -12,8 +13,10 @@ class Participant {
     required this.firstName,
     required this.lastName,
     required this.gender,
-    required this.id,
+    // required this.id,
     required this.age,
     required this.bibNumber,
+    this.id = '',
+    this.raceId = '',
   });
 }
