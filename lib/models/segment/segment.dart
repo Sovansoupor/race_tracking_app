@@ -31,17 +31,16 @@ class Segment {
   final String id;
   final String name;
   final int order;
-  final int? distance;
+  final String distance;
   final ActivityType activityType;
-  final String? unit;
+
 
   Segment({
     required this.activityType,
     required this.id,
     required this.name,
     required this.order,
-    this.distance,
-    this.unit,
+    required this.distance,
   });
 
   // Add this copyWith method
@@ -49,7 +48,7 @@ class Segment {
     String? id,
     String? name,
     int? order,
-    int? distance,
+    String? distance,
     ActivityType? activityType,
     String? unit,
   }) {
@@ -59,7 +58,7 @@ class Segment {
       order: order ?? this.order,
       distance: distance ?? this.distance,
       activityType: activityType ?? this.activityType,
-      unit: unit ?? this.unit,
+      // unit: unit ?? this.unit,
     );
   }
 

@@ -16,8 +16,8 @@ class SegmentDto {
       id: id,
       name: json['name'] as String? ?? '',
       order: json['order'] as int? ?? 0,
-      distance: json['distance'] as int?,
-      unit: json['unit'] as String?,
+      distance: json['distance'] as String,
+      // unit: json['unit'] as String?,
       activityType: activityType,
     );
   }
@@ -25,10 +25,10 @@ class SegmentDto {
   /// Segment → JSON for Firestore/RealtimeDB
   static Map<String, dynamic> toJson(Segment segment) {
     return {
-      'name'        : segment.name,
-      'order'       : segment.order,
-      'distance'    : segment.distance,
-      'unit'        : segment.unit,
+      'name': segment.name,
+      'order': segment.order,
+      'distance': segment.distance,
+      // 'unit'        : segment.unit,
       'activityType': segment.activityType.name,
     };
   }
