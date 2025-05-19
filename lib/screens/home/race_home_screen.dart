@@ -8,6 +8,10 @@ import '../race/race_details.dart';
 
 class RaceHomeScreen extends StatelessWidget {
   const RaceHomeScreen({super.key});
+  String _capitalizeFirstLetter(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -137,6 +141,78 @@ class RaceHomeScreen extends StatelessWidget {
                           SizedBox(height: 8),
                         ],
                       ),
+                    ),
+
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ...race.segments.map((segment) {
+                          final distanceText =
+                              segment.distance.trim().isEmpty
+                                  ? 'No distance'
+                                  : segment.distance;
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: RaceColors.white,
+                                borderRadius: BorderRadius.circular(
+                                  RaceSpacings.radius,
+                                ),
+                                border: Border.all(
+                                  color: RaceColors.neutralDark,
+                                  width: 0.25,
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(RaceSpacings.s),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      _capitalizeFirstLetter(segment.name),
+                                      style: RaceTextStyles.label.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      " Distance $distanceText",
+                                      style: RaceTextStyles.label.copyWith(
+                                        color: RaceColors.neutralDark,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    RaceSpacings.radius,
+                                  ),
+                                ),
+                              ),
+                              onPressed: () {
+                                raceProvider.deleteRace(race.id);
+                              },
+                              child: Text(
+                                'Delete Race',
+                                style: RaceTextStyles.label.copyWith(
+                                  color: RaceColors.neutralDark,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 );
