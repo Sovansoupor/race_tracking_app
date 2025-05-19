@@ -216,9 +216,7 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          _raceCompleted
-                              ? 'Race Completed'
-                              : 'All Segments Completed',
+                          _raceCompleted ? 'Race Completed' : '',
                           style: RaceTextStyles.label.copyWith(
                             color: RaceColors.white,
                           ),

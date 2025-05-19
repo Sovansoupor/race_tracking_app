@@ -69,24 +69,28 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
   }
 
   void _endRace() {
-    final segmentProvider = Provider.of<SegmentProvider>(context, listen: false);
+    final segmentProvider = Provider.of<SegmentProvider>(
+      context,
+      listen: false,
+    );
     segmentProvider.endRace();
     segmentProvider.stopRaceTimer();
-    
+
     if (widget.raceId != null) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => ResultDetailsScreen(
-            raceId: widget.raceId!,
-            raceRepository: FirebaseRaceRepository(),
-            participantRepository: FirebaseParticipantRepository(),
-          ),
+          builder:
+              (context) => ResultDetailsScreen(
+                raceId: widget.raceId!,
+                raceRepository: FirebaseRaceRepository(),
+                participantRepository: FirebaseParticipantRepository(),
+              ),
         ),
       );
     } else {
       Navigator.of(context).pop();
     }
-    
+
     if (widget.onEndRace != null) {
       widget.onEndRace!();
     }
@@ -104,7 +108,9 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
   Widget build(BuildContext context) {
     final segmentProvider = context.watch<SegmentProvider>();
     final currentActivityType = segmentProvider.activityType;
-    final allSegmentsCompleted = segmentProvider.areAllSegmentsCompleted(ActivityType.values.length);
+    final allSegmentsCompleted = segmentProvider.areAllSegmentsCompleted(
+      ActivityType.values.length,
+    );
 
     return Scaffold(
       backgroundColor: RaceColors.backgroundAccent,
@@ -113,10 +119,7 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
         toolbarHeight: 95,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: RaceColors.white,
-          ),
+          icon: Icon(Icons.arrow_back, color: RaceColors.white),
           onPressed: () {
             Navigator.of(context).pop();
           },
@@ -170,75 +173,76 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
             child: Wrap(
               spacing: 12.0,
               runSpacing: 12.0,
-              children: ActivityType.values.map((type) {
-                final isSelected = currentActivityType == type;
-                final isCompleted = segmentProvider.isSegmentCompleted(
-                  ActivityType.values.indexOf(type),
-                );
-                
-                return GestureDetector(
-                  onTap: () {
-                    if (!isSelected) {
-                      segmentProvider.selectSegment(type);
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? RaceColors.functional
-                          : (isCompleted ? RaceColors.primary : RaceColors.neutralDark),
-                      borderRadius: BorderRadius.circular(
-                        RaceSpacings.radius,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isCompleted ? Icons.check_circle : type.icon,
-                          color: RaceColors.white,
-                          size: 20,
+              children:
+                  ActivityType.values.map((type) {
+                    final isSelected = currentActivityType == type;
+                    final isCompleted = segmentProvider.isSegmentCompleted(
+                      ActivityType.values.indexOf(type),
+                    );
+
+                    return GestureDetector(
+                      onTap: () {
+                        if (!isSelected) {
+                          segmentProvider.selectSegment(type);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          type.label,
-                          style: RaceTextStyles.label.copyWith(
-                            color: RaceColors.white,
+                        decoration: BoxDecoration(
+                          color:
+                              isSelected
+                                  ? RaceColors.functional
+                                  : (isCompleted
+                                      ? RaceColors.primary
+                                      : RaceColors.neutralDark),
+                          borderRadius: BorderRadius.circular(
+                            RaceSpacings.radius,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isCompleted ? Icons.check_circle : type.icon,
+                              color: RaceColors.white,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              type.label,
+                              style: RaceTextStyles.label.copyWith(
+                                color: RaceColors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
             ),
           ),
           const SizedBox(height: RaceSpacings.m),
-            Center(
-
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _formatDuration(_elapsed),
-                      style: RaceTextStyles.heading.copyWith(
-                        color: RaceColors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _formatDuration(_elapsed),
+                  style: RaceTextStyles.heading.copyWith(
+                    color: RaceColors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
+              ],
+            ),
+          ),
           const SizedBox(height: RaceSpacings.m),
           const RaceDivider(),
-          Expanded(
-            child: const GridViewMode(), 
-          ),
+          Expanded(child: const GridViewMode()),
         ],
       ),
     );

@@ -60,18 +60,21 @@ class ParticipantGrid extends StatelessWidget {
         final participant = allParticipants[index];
         final bibNumber = participant.bibNumber;
         final recordedTime = participantTimes[bibNumber];
-        final hasRecordedTime = recordedTime != null;
 
         return GestureDetector(
           onTap: () {
-            if (onParticipantTap != null && !hasRecordedTime) {
+            // Always record the new time when the grid is tapped
+            if (onParticipantTap != null) {
               onParticipantTap!(bibNumber);
             }
           },
           child: Container(
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: hasRecordedTime ? RaceColors.functional : RaceColors.neutralDark,
+              color:
+                  recordedTime != null
+                      ? RaceColors.functional
+                      : RaceColors.neutralDark,
               borderRadius: BorderRadius.circular(RaceSpacings.radius),
               boxShadow: [
                 BoxShadow(
@@ -93,7 +96,9 @@ class ParticipantGrid extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  hasRecordedTime ? _formatDuration(recordedTime) : "--:--",
+                  recordedTime != null
+                      ? _formatDuration(recordedTime)
+                      : "--:--",
                   style: RaceTextStyles.label.copyWith(
                     color: RaceColors.white,
                     fontSize: 12,
@@ -103,7 +108,7 @@ class ParticipantGrid extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      hasRecordedTime ? "Tracked" : "Tap to Track",
+                      recordedTime != null ? "Tracked" : "Tap to Track",
                       style: RaceTextStyles.label.copyWith(
                         color: RaceColors.white.withOpacity(0.8),
                         fontSize: 10,
