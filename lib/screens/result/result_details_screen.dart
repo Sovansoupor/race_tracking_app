@@ -75,10 +75,13 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
 
       // Check if all segments are completed
       _allSegmentsCompleted = true;
-      for (int i = 0; i < _race!.segments.length; i++) {
-        if (!segmentProvider.isSegmentCompleted(i)) {
-          _allSegmentsCompleted = false;
-          break;
+      if (_race != null) {
+        // Ensure _race is not null
+        for (int i = 0; i < _race!.segments.length; i++) {
+          if (!segmentProvider.isSegmentCompletedForRace(_race!.id, i)) {
+            _allSegmentsCompleted = false;
+            break;
+          }
         }
       }
 

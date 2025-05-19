@@ -108,8 +108,11 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
   Widget build(BuildContext context) {
     final segmentProvider = context.watch<SegmentProvider>();
     final currentActivityType = segmentProvider.activityType;
-    final allSegmentsCompleted = segmentProvider.areAllSegmentsCompleted(
-      ActivityType.values.length,
+
+    // Check if all segments are completed for the specific race
+    final allSegmentsCompleted = segmentProvider.areAllSegmentsCompletedForRace(
+      widget.raceId!,
+      segmentProvider.currentSegmentIndex,
     );
 
     return Scaffold(
@@ -176,9 +179,11 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
               children:
                   ActivityType.values.map((type) {
                     final isSelected = currentActivityType == type;
-                    final isCompleted = segmentProvider.isSegmentCompleted(
-                      ActivityType.values.indexOf(type),
-                    );
+                    final isCompleted = segmentProvider
+                        .isSegmentCompletedForRace(
+                          widget.raceId!,
+                          ActivityType.values.indexOf(type),
+                        );
 
                     return GestureDetector(
                       onTap: () {

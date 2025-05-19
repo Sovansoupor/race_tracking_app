@@ -287,9 +287,11 @@ class _RaceDetailsState extends State<RaceDetails> {
 
     // Check if race is completed or all segments are completed
     final bool raceCompleted = segmentProvider.isRaceCompleted;
-    final bool allSegmentsCompleted = segmentProvider.areAllSegmentsCompleted(
-      widget.race.segments.length,
-    );
+    final bool allSegmentsCompleted = segmentProvider
+        .areAllSegmentsCompletedForRace(
+          widget.race.id,
+          widget.race.segments.length,
+        );
     final bool showResultsButton = raceCompleted || allSegmentsCompleted;
 
     return Scaffold(
@@ -367,7 +369,16 @@ class _RaceDetailsState extends State<RaceDetails> {
                 child: RaceButton(
                   text: "View Results",
                   icon: Icons.bar_chart,
-                  onPressed: _viewRaceResults,
+                  onPressed: () {
+                    // Only navigate to results if the race is completed
+                    if (raceCompleted) {
+                      _viewRaceResults();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Race not completed yet.")),
+                      );
+                    }
+                  },
                   color: RaceColors.primary,
                 ),
               ),
@@ -395,13 +406,15 @@ class _RaceDetailsState extends State<RaceDetails> {
                             ),
                           );
                         } else {
-                          segmentProvider.startRace();
+                          String raceId = widget.race.id; // Use the race ID
+                          segmentProvider.startRace(widget.race.id);
                           segmentProvider.startRaceTimer();
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder:
                                   (_) => TimeTrackingScreen(
                                     startImmediately: true,
+                                    raceId: raceId,
                                   ),
                             ),
                           );

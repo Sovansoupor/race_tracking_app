@@ -8,9 +8,11 @@ enum ViewMode { grid, massArrival }
 class SegmentProvider extends ChangeNotifier {
   // The current activity segment (e.g., swimming, cycling, running)
   ActivityType _activityType = ActivityType.swimming;
+  String? _currentRaceId;
+  String? get currentRaceId => _currentRaceId; // Add this getter
 
-  // Tracks which segments have been completed (segment index -> completed)
-  final Map<int, bool> _trackedSegments = {};
+  // Tracks which segments have been completed by race ID
+  final Map<String, Map<int, bool>> _trackedSegmentsByRace = {};
 
   // Map of participant bib -> segment -> duration taken for that segment
   final Map<String, Map<ActivityType, Duration>> _participantTimings = {};
@@ -74,7 +76,7 @@ class SegmentProvider extends ChangeNotifier {
   }
 
   // Record time for a participant in the current segment
-  void recordParticipantTime(int participantId, Duration time) {
+  void recordParticipantTime(String raceId, int participantId, Duration time) {
     if (!_segmentParticipantTimes.containsKey(_activityType)) {
       _segmentParticipantTimes[_activityType] = {};
     }
@@ -86,10 +88,16 @@ class SegmentProvider extends ChangeNotifier {
     }
     _participantTimings[participantId.toString()]![_activityType] = time;
 
+    // Ensure the tracked segments map exists for the race
+    if (!_trackedSegmentsByRace.containsKey(raceId)) {
+      _trackedSegmentsByRace[raceId] = {};
+    }
+
     // Mark the current segment as completed if all participants are tracked
     if (_segmentParticipantTimes[_activityType]!.length ==
-        _participantTimers.length && _participantTimers.isNotEmpty) {
-      _trackedSegments[_currentSegmentIndex] = true;
+            _participantTimers.length &&
+        _participantTimers.isNotEmpty) {
+      _trackedSegmentsByRace[raceId]![currentSegmentIndex] = true;
     }
 
     notifyListeners();
@@ -98,7 +106,9 @@ class SegmentProvider extends ChangeNotifier {
   // Reset tracking for the current segment
   void resetCurrentSegmentTracking() {
     _segmentParticipantTimes[_activityType] = {};
-    _trackedSegments[_currentSegmentIndex] = false;
+    for (var raceId in _trackedSegmentsByRace.keys) {
+      _trackedSegmentsByRace[raceId]![currentSegmentIndex] = false;
+    }
     notifyListeners();
   }
 
@@ -120,9 +130,12 @@ class SegmentProvider extends ChangeNotifier {
   }
 
   // Start the race
-  void startRace() {
+  void startRace(String raceId) {
+    _currentRaceId = raceId;
     _isRaceStarted = true;
     _isRaceCompleted = false;
+    _participantTimers.clear(); // Clear previous participants
+    _trackedSegmentsByRace.clear();
     notifyListeners();
   }
 
@@ -130,20 +143,21 @@ class SegmentProvider extends ChangeNotifier {
   void endRace() {
     _isRaceStarted = false;
     _isRaceCompleted = true;
+    _currentRaceId = null;
     notifyListeners();
   }
 
-  // Check if a segment is completed
-  bool isSegmentCompleted(int segmentIndex) {
-    return _trackedSegments[segmentIndex] ?? false;
+  // Check if a segment is completed for a specific race
+  bool isSegmentCompletedForRace(String raceId, int segmentIndex) {
+    return _trackedSegmentsByRace[raceId]?[segmentIndex] ?? false;
   }
 
-  // Check if all segments are completed
-  bool areAllSegmentsCompleted(int totalSegments) {
-    if (_trackedSegments.isEmpty) return false;
-    
+  // Check if all segments are completed for a specific race
+  bool areAllSegmentsCompletedForRace(String raceId, int totalSegments) {
+    if (_trackedSegmentsByRace[raceId]?.isEmpty ?? true) return false;
+
     for (int i = 0; i < totalSegments; i++) {
-      if (!(_trackedSegments[i] ?? false)) {
+      if (!(_trackedSegmentsByRace[raceId]?[i] ?? false)) {
         return false;
       }
     }
@@ -175,7 +189,7 @@ class SegmentProvider extends ChangeNotifier {
 
     return sortedResults;
   }
-  
+
   // Add a participant to be tracked
   void addParticipantToTrack(int bibNumber) {
     if (!_participantTimers.containsKey(bibNumber)) {
@@ -183,7 +197,7 @@ class SegmentProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   // Add multiple participants to be tracked
   void addParticipantsToTrack(List<int> bibNumbers) {
     bool changed = false;
@@ -197,10 +211,10 @@ class SegmentProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   // Clear all participant data (for testing)
   void clearAllData() {
-    _trackedSegments.clear();
+    _trackedSegmentsByRace.clear();
     _participantTimings.clear();
     _participantTimers.clear();
     _segmentParticipantTimes.clear();
