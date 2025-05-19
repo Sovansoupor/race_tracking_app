@@ -9,6 +9,7 @@ class GridViewMode extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final segmentProvider = context.watch<SegmentProvider>();
+     final raceId = segmentProvider.currentRaceId;
 
     return Column(
       children: [
@@ -18,7 +19,7 @@ class GridViewMode extends StatelessWidget {
             onParticipantTap: (bibNumber) {
               // Record the current elapsed time for this participant
               final elapsedTime = segmentProvider.raceElapsed;
-              segmentProvider.recordParticipantTime(bibNumber, elapsedTime);
+              segmentProvider.recordParticipantTime(raceId!, bibNumber, elapsedTime);
             },
           ),
         ),
