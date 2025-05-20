@@ -1,7 +1,8 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:race_tracking_app/models/segment/segment.dart';
+import 'package:race_tracking_app/data/repository/firebase/firebase_race_repository.dart';
 
 enum ViewMode { grid, massArrival }
 
@@ -9,10 +10,13 @@ class SegmentProvider extends ChangeNotifier {
   // The current activity segment (e.g., swimming, cycling, running)
   ActivityType _activityType = ActivityType.swimming;
   String? _currentRaceId;
-  String? get currentRaceId => _currentRaceId; // Add this getter
+  String? get currentRaceId => _currentRaceId;
 
   // Tracks which segments have been completed by race ID
   final Map<String, Map<int, bool>> _trackedSegmentsByRace = {};
+  
+  // Set to track which races have been completed
+  final Set<String> _completedRaces = {};
 
   // Map of participant bib -> segment -> duration taken for that segment
   final Map<String, Map<ActivityType, Duration>> _participantTimings = {};
@@ -49,6 +53,43 @@ class SegmentProvider extends ChangeNotifier {
   Duration get raceElapsed => _raceElapsed;
   Map<int, Duration> get currentSegmentParticipantTimes =>
       _segmentParticipantTimes[_activityType] ?? {};
+      
+  // Get the set of completed races
+  Set<String> getCompletedRaces() => _completedRaces;
+  
+  // Check if a specific race is completed
+  bool isRaceCompletedById(String raceId) => _completedRaces.contains(raceId);
+  
+  // Mark a race as completed and save to Firebase
+  Future<void> markRaceAsCompleted(String raceId) async {
+    _completedRaces.add(raceId);
+    notifyListeners();
+    
+    // Save to Firebase for persistence
+    try {
+      final raceRepo = FirebaseRaceRepository();
+      await raceRepo.markRaceAsCompleted(raceId);
+      print('Race $raceId marked as completed in Firebase');
+    } catch (e) {
+      print('Error marking race as completed in Firebase: $e');
+    }
+  }
+  
+  // Load race completion status from Firebase
+  Future<void> loadRaceCompletionStatus(String raceId) async {
+    try {
+      final raceRepo = FirebaseRaceRepository();
+      final isCompleted = await raceRepo.isRaceCompleted(raceId);
+      
+      if (isCompleted && !_completedRaces.contains(raceId)) {
+        _completedRaces.add(raceId);
+        notifyListeners();
+        print('Loaded completion status for race $raceId: completed');
+      }
+    } catch (e) {
+      print('Error loading race completion status: $e');
+    }
+  }
 
   // Dispose all timers when the provider is disposed
   @override
@@ -125,6 +166,12 @@ class SegmentProvider extends ChangeNotifier {
   // Stop the global race timer
   void stopRaceTimer() {
     _raceTimer?.cancel();
+    
+    // Mark the current race as completed if there is one
+    if (_currentRaceId != null) {
+      markRaceAsCompleted(_currentRaceId!);
+    }
+    
     _isRaceCompleted = true; // Mark race as completed when timer stops
     notifyListeners();
   }
@@ -134,13 +181,27 @@ class SegmentProvider extends ChangeNotifier {
     _currentRaceId = raceId;
     _isRaceStarted = true;
     _isRaceCompleted = false;
-    _participantTimers.clear(); // Clear previous participants
-    _trackedSegmentsByRace.clear();
+    
+    // Don't clear participant timers if we're resuming a race
+    if (!_participantTimings.keys.any((key) => key.isNotEmpty)) {
+      _participantTimers.clear();
+    }
+    
+    // Make sure we have a tracking entry for this race
+    if (!_trackedSegmentsByRace.containsKey(raceId)) {
+      _trackedSegmentsByRace[raceId] = {};
+    }
+    
     notifyListeners();
   }
 
-  // End the race
-  void endRace() {
+  // End the race and save results
+  Future<void> endRace() async {
+    // Mark the current race as completed if there is one
+    if (_currentRaceId != null) {
+      await markRaceAsCompleted(_currentRaceId!);
+    }
+    
     _isRaceStarted = false;
     _isRaceCompleted = true;
     _currentRaceId = null;
@@ -169,11 +230,26 @@ class SegmentProvider extends ChangeNotifier {
     final Map<int, Duration> totalTimes = {};
 
     _participantTimings.forEach((participantId, segmentTimes) {
-      final int id = int.parse(participantId);
-      totalTimes[id] = segmentTimes.values.fold(
-        Duration.zero,
-        (total, segmentTime) => total + segmentTime,
-      );
+      try {
+        final int id = int.parse(participantId);
+        final duration = segmentTimes.values.fold(
+          Duration.zero,
+          (total, segmentTime) => total + segmentTime,
+        );
+        
+        // Only add if the duration is not zero
+        if (duration.inMilliseconds > 0) {
+          totalTimes[id] = duration;
+        }
+      } catch (e) {
+        print('Error calculating total time for participant $participantId: $e');
+      }
+    });
+
+    // Debug output
+    print('Total times calculated: ${totalTimes.length}');
+    totalTimes.forEach((bib, time) {
+      print('BIB $bib: ${time.inMinutes}m ${time.inSeconds % 60}s');
     });
 
     return totalTimes;
@@ -188,6 +264,21 @@ class SegmentProvider extends ChangeNotifier {
         totalTimes.entries.toList()..sort((a, b) => a.value.compareTo(b.value));
 
     return sortedResults;
+  }
+  
+  // Get ranked results for a specific race
+  List<MapEntry<int, Duration>> getRankedResultsForRace(String raceId, List<int> raceBibNumbers) {
+    final totalTimes = calculateTotalTimes();
+    
+    // Filter results to only include participants from this race
+    final raceResults = totalTimes.entries
+        .where((entry) => raceBibNumbers.contains(entry.key))
+        .toList();
+    
+    // Sort by time (ascending)
+    raceResults.sort((a, b) => a.value.compareTo(b.value));
+    
+    return raceResults;
   }
 
   // Add a participant to be tracked
@@ -218,10 +309,30 @@ class SegmentProvider extends ChangeNotifier {
     _participantTimings.clear();
     _participantTimers.clear();
     _segmentParticipantTimes.clear();
+    _completedRaces.clear();
     _isRaceCompleted = false;
     _isRaceStarted = false;
     _raceElapsed = Duration.zero;
     _raceTimer?.cancel();
     notifyListeners();
+  }
+  
+  // Add a participant time directly (for testing or manual entry)
+  void addParticipantTimeDirectly(int bibNumber, ActivityType activity, Duration time) {
+    if (!_participantTimings.containsKey(bibNumber.toString())) {
+      _participantTimings[bibNumber.toString()] = {};
+    }
+    
+    _participantTimings[bibNumber.toString()]![activity] = time;
+    
+    if (!_segmentParticipantTimes.containsKey(activity)) {
+      _segmentParticipantTimes[activity] = {};
+    }
+    
+    _segmentParticipantTimes[activity]![bibNumber] = time;
+    
+    notifyListeners();
+    
+    print('Added time directly for BIB $bibNumber: ${time.inMinutes}m ${time.inSeconds % 60}s');
   }
 }

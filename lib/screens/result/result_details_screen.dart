@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:race_tracking_app/data/dto/race_result_dto.dart';
+import 'package:race_tracking_app/data/repository/firebase/firebase_race_repository.dart';
 import 'package:race_tracking_app/data/repository/participant_repository.dart';
 import 'package:race_tracking_app/data/repository/race_repository.dart';
+import 'package:race_tracking_app/models/participant/participant.dart';
 import 'package:race_tracking_app/models/race/race.dart';
 import 'package:race_tracking_app/provider/segment/segment_provider.dart';
-import 'package:race_tracking_app/screens/result/race_result.dart';
 import 'package:race_tracking_app/screens/result/widget/result_row.dart';
 import 'package:race_tracking_app/screens/result/widget/result_table_header.dart';
 import 'package:race_tracking_app/theme/theme.dart';
@@ -30,14 +32,23 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
   bool _isLoading = true;
   String _errorMessage = '';
   Race? _race;
-  List<RaceResult> _results = [];
+  List<Participant> _participants = [];
+  Map<int, Duration> _totalTimes = {};
+  List<int> _rankings = []; // Store the order of bibNumbers by rank
   bool _raceCompleted = false;
-  bool _allSegmentsCompleted = false;
 
   @override
   void initState() {
     super.initState();
     _loadRaceResults();
+  }
+
+  // Format duration to string (HH:MM:SS)
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return '${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds';
   }
 
   Future<void> _loadRaceResults() async {
@@ -54,64 +65,74 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
         orElse: () => throw Exception('Race not found'),
       );
 
-      // Step 2: Get all participants
-      final allParticipants =
-          await widget.participantRepository.getParticipant();
-
-      // Step 3: Filter participants for this race using raceId
-      final raceParticipants =
-          allParticipants
-              .where((participant) => participant.raceId == widget.raceId)
-              .toList();
-
-      // Get the segment provider to check race status
-      final segmentProvider = Provider.of<SegmentProvider>(
-        context,
-        listen: false,
+      // Check if this race has saved results in Firebase
+      final firebaseRaceRepo = widget.raceRepository as FirebaseRaceRepository;
+      final hasStoredResults = await firebaseRaceRepo.raceResultsExist(
+        widget.raceId,
       );
-      _raceCompleted =
-          !segmentProvider.isRaceStarted &&
-          segmentProvider.raceElapsed > Duration.zero;
 
-      // Check if all segments are completed
-      _allSegmentsCompleted = true;
-      if (_race != null) {
-        // Ensure _race is not null
-        for (int i = 0; i < _race!.segments.length; i++) {
-          if (!segmentProvider.isSegmentCompletedForRace(_race!.id, i)) {
-            _allSegmentsCompleted = false;
-            break;
-          }
-        }
-      }
+      // Check if race is marked as completed in Firebase
+      _raceCompleted = await firebaseRaceRepo.isRaceCompleted(widget.raceId);
 
-      // Only process results if race is completed or all segments are done
-      if (_raceCompleted || _allSegmentsCompleted) {
-        // Step 4: Get ranked results from segment provider
-        final rankedResults = segmentProvider.getRankedResults();
+      if (hasStoredResults) {
+        // Load results from Firebase
+        final resultData = await firebaseRaceRepo.getRaceResults(widget.raceId);
 
-        // Step 5: Create race results in ranked order
-        _results = [];
-        for (int i = 0; i < rankedResults.length; i++) {
-          final entry = rankedResults[i];
-          // Find the participant with this bib number
-          final participant = raceParticipants.firstWhere(
-            (p) => p.bibNumber == entry.key,
-            orElse:
-                () =>
-                    throw Exception(
-                      'Participant not found for BIB ${entry.key}',
-                    ),
+        // Convert to Participants and total times
+        _participants = [];
+        _totalTimes = {};
+        _rankings = [];
+
+        for (final data in resultData) {
+          final dto = RaceResultDto.fromJson(data);
+          final participant = dto.toParticipant();
+
+          _participants.add(participant);
+          _totalTimes[participant.bibNumber] = Duration(
+            milliseconds: dto.totalTimeMs,
           );
-
-          _results.add(
-            RaceResult.fromParticipant(
-              participant: participant,
-              position: i + 1,
-              totalTime: entry.value,
-            ),
-          );
+          _rankings.add(participant.bibNumber);
         }
+      } else if (_raceCompleted) {
+        // If race is completed but no results in Firebase, try to get from segment provider
+
+        // Step 2: Get all participants
+        final allParticipants =
+            await widget.participantRepository.getParticipant();
+
+        // Step 3: Filter participants for this race using raceId
+        _participants =
+            allParticipants
+                .where((participant) => participant.raceId == widget.raceId)
+                .toList();
+
+        // Get the BIB numbers for participants in this race
+        final raceBibNumbers = _participants.map((p) => p.bibNumber).toList();
+
+        // Get the segment provider to check race status
+        final segmentProvider = Provider.of<SegmentProvider>(
+          context,
+          listen: false,
+        );
+
+        // Get total times for all participants
+        _totalTimes = segmentProvider.calculateTotalTimes();
+
+        // Create rankings by sorting participants by total time
+        _rankings = raceBibNumbers.toList();
+        _rankings.sort((a, b) {
+          final timeA = _totalTimes[a] ?? Duration.zero;
+          final timeB = _totalTimes[b] ?? Duration.zero;
+          return timeA.compareTo(timeB);
+        });
+      } else {
+        // Race is not completed, just get participants
+        final allParticipants =
+            await widget.participantRepository.getParticipant();
+        _participants =
+            allParticipants
+                .where((participant) => participant.raceId == widget.raceId)
+                .toList();
       }
 
       setState(() {
@@ -127,6 +148,18 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final segmentProvider = Provider.of<SegmentProvider>(context);
+
+    // Update race completion status whenever the segment provider changes
+    final isCompletedInProvider = segmentProvider.isRaceCompletedById(
+      widget.raceId,
+    );
+    if (isCompletedInProvider != _raceCompleted) {
+      setState(() {
+        _raceCompleted = isCompletedInProvider;
+      });
+    }
+
     return Scaffold(
       backgroundColor: RaceColors.backgroundAccent,
       appBar: AppBar(
@@ -219,7 +252,9 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          _raceCompleted ? 'Race Completed' : '',
+                          _raceCompleted
+                              ? 'Race Completed'
+                              : 'Race In Progress',
                           style: RaceTextStyles.label.copyWith(
                             color: RaceColors.white,
                           ),
@@ -231,47 +266,122 @@ class _ResultDetailsScreenState extends State<ResultDetailsScreen> {
               ),
               const SizedBox(height: 16),
               // Table header
-              const Padding(
-                padding: EdgeInsets.only(right: 16),
-                child: ResultTableHeader(),
-              ),
+              if (_raceCompleted)
+                const Padding(
+                  padding: EdgeInsets.only(right: 16),
+                  child: ResultTableHeader(),
+                ),
             ],
           ),
         ),
-        const RaceDivider(),
+        if (_raceCompleted) const RaceDivider(),
 
-        // Results List
-        _results.isEmpty
-            ? Expanded(
-              child: Center(
-                child: Text(
-                  'No results available for this race',
-                  style: RaceTextStyles.label.copyWith(color: RaceColors.white),
-                ),
-              ),
-            )
-            : Expanded(
-              child: ListView.separated(
-                padding: EdgeInsets.zero,
-                itemCount: _results.length,
-                separatorBuilder:
-                    (context, index) => Divider(
-                      height: 1,
-                      color: RaceColors.white.withOpacity(0.1),
-                      indent: 16,
-                      endIndent: 16,
+        // Results List - Only show if race is completed
+        if (!_raceCompleted)
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.timer_outlined,
+                    color: RaceColors.white.withOpacity(0.7),
+                    size: 64,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Race has not been completed yet',
+                    style: RaceTextStyles.body.copyWith(
+                      color: RaceColors.white,
+                      fontWeight: FontWeight.bold,
                     ),
-                itemBuilder: (context, index) {
-                  final result = _results[index];
-                  return ResultRow(
-                    rank: result.rank,
-                    name: result.name,
-                    bib: result.bib,
-                    result: result.result,
-                  );
-                },
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Results will be available once the race is finished',
+                    style: RaceTextStyles.label.copyWith(
+                      color: RaceColors.white.withOpacity(0.7),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             ),
+          )
+        else if (_rankings.isEmpty)
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.emoji_events_outlined,
+                    color: RaceColors.white.withOpacity(0.7),
+                    size: 64,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No results available for this race',
+                    style: RaceTextStyles.body.copyWith(
+                      color: RaceColors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'The race is completed but no results were recorded',
+                    style: RaceTextStyles.label.copyWith(
+                      color: RaceColors.white.withOpacity(0.7),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: ListView.separated(
+              padding: EdgeInsets.zero,
+              itemCount: _rankings.length,
+              separatorBuilder:
+                  (context, index) => Divider(
+                    height: 1,
+                    color: RaceColors.white.withOpacity(0.1),
+                    indent: 16,
+                    endIndent: 16,
+                  ),
+              itemBuilder: (context, index) {
+                final bibNumber = _rankings[index];
+                final participant = _participants.firstWhere(
+                  (p) => p.bibNumber == bibNumber,
+                  orElse:
+                      () => Participant(
+                        {},
+                        firstName: 'Unknown',
+                        lastName: '',
+                        gender: '',
+                        age: 0,
+                        bibNumber: bibNumber,
+                      ),
+                );
+                final time = _totalTimes[bibNumber] ?? Duration.zero;
+
+                // Debug output for this row
+                print(
+                  'Row $index: BIB $bibNumber, Time: ${_formatDuration(time)}',
+                );
+
+                // Convert values to strings for ResultRow
+                return ResultRow(
+                  rank: '${index + 1}', // Convert rank to string
+                  name: '${participant.firstName} ${participant.lastName}',
+                  bib: 'BIB${participant.bibNumber}', // Format bib number
+                  result: _formatDuration(time), // Format duration as string
+                );
+              },
+            ),
+          ),
       ],
     );
   }
